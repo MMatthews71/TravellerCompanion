@@ -311,7 +311,7 @@ function displayResults(results) {
 
         const distance = document.createElement('td');
         const walkingMinutes = Math.round((place.distance / 5) * 60); // 5 km/h speed
-        distance.textContent = `${place.distance} km (~${walkingMinutes} min walk)`;
+        distance.textContent = `${walkingMinutes} min`;
 
         const mapLink = document.createElement('td');
         if (place.place_id) {       
