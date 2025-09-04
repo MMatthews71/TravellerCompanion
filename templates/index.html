@@ -1,116 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traveler's Companion</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ version }}">
-    <style>
-        /* Add this if not already in styles.css */
-        .hidden {
-            display: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traveler's Companion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ version }}">
+  <style>
+    /* Add this if not already in styles.css */
+    .hidden {
+      display: none;
+    }
 
-        /* Location display in top right corner */
-        #user-location {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            z-index: 1000;
-        }
-    </style>
+    /* Location display in top right corner */
+    #user-location {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+
+    /* Sticky bar */
+    .controls-bar {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: #fff;
+      padding: 10px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Traveler's Companion</h1>
-            <p>Find essential services near your location</p>
-            <div id="user-location" class="user-location">📍 Detecting location...</div>
-        </header>
+  <div class="container">
+    <header>
+      <h1>Traveler's Companion</h1>
+      <p>Find essential services near your location</p>
+      <div id="user-location" class="user-location">📍 Detecting location...</div>
+    </header>
 
-        <div class="services">
-            <button class="service-btn" data-service="laundry">Laundry</button>
-            <button class="service-btn" data-service="pharmacy">Pharmacy</button>
-            <button class="service-btn" data-service="supermarket">Supermarket</button>
-            <button class="service-btn" data-service="food">Food</button>
-            <button class="service-btn" data-service="atm">ATM</button>
-            <button class="service-btn" data-service="hostel">Hostel</button>
-            <button class="service-btn" data-service="bus_station">Transport</button>
+    <!-- ✅ Sticky controls wrapper -->
+    <div class="controls-bar">
+      <div class="services">
+        <button class="service-btn" data-service="laundry">Laundry</button>
+        <button class="service-btn" data-service="pharmacy">Pharmacy</button>
+        <button class="service-btn" data-service="supermarket">Supermarket</button>
+        <button class="service-btn" data-service="food">Food</button>
+        <button class="service-btn" data-service="atm">ATM</button>
+        <button class="service-btn" data-service="hostel">Hostel</button>
+        <button class="service-btn" data-service="bus_station">Transport</button>
+      </div>
+
+      <div id="status" class="status-message"></div>
+
+      <div class="sort-options">
+        <span>Sort by:</span>
+        <button id="sort-distance" class="sort-btn active" data-sort="distance">Distance</button>
+        <button id="sort-rating" class="sort-btn" data-sort="rating">Rating</button>
+        <button id="sort-ratings" class="sort-btn" data-sort="ratings"># of Ratings</button>
+
+        <!-- 🍽 Food filter -->
+        <div class="food-filter-container hidden">
+          <label for="food-type-filter">Food Type:</label>
+          <select id="food-type-filter" class="food-type-filter">
+            <option value="all">All</option>
+            <option value="restaurant">Restaurants</option>
+            <option value="fast food">Fast Food</option>
+            <option value="cafe">Cafés</option>
+          </select>
         </div>
 
-        <div id="status" class="status-message"></div>
-
-        <!-- Results section hidden by default -->
-        <div id="results-section" class="results-container hidden">
-            <div class="sort-options">
-                <span>Sort by:</span>
-                <button id="sort-distance" class="sort-btn active" data-sort="distance">Distance</button>
-                <button id="sort-rating" class="sort-btn" data-sort="rating">Rating</button>
-                <button id="sort-ratings" class="sort-btn" data-sort="ratings"># of Ratings</button>
-
-                <!-- 🍽 Food filter -->
-                <div class="food-filter-container hidden">
-                    <label for="food-type-filter">Food Type:</label>
-                    <select id="food-type-filter" class="food-type-filter">
-                        <option value="all">All</option>
-                        <option value="restaurant">Restaurants</option>
-                        <option value="fast food">Fast Food</option>
-                        <option value="cafe">Cafés</option>
-                    </select>
-                </div>
-
-                <!-- 🛒 Supermarket filter -->
-                <div class="supermarket-filter-container hidden">
-                    <label for="supermarket-type-filter">Market Type:</label>
-                    <select id="supermarket-type-filter" class="supermarket-type-filter">
-                        <option value="all">All</option>
-                        <option value="supermarket">Supermarkets</option>
-                        <option value="convenience store">Convenience Stores</option>
-                        <option value="local market">Local Markets</option>
-                        <option value="general store">General Stores</option>
-                    </select>
-                </div>
-
-                <!-- 🛏️ Hostel filter -->
-                <div class="hostel-filter-container hidden">
-                    <label for="hostel-type-filter">Type:</label>
-                    <select id="hostel-type-filter" class="hostel-type-filter">
-                        <option value="all">All</option>
-                        <option value="hostel">Hostels</option>
-                        <option value="hotel">Hotels</option>
-                        <option value="lodging">Other Lodging</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <table id="results-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Category</th> 
-                            <th>Rating</th>
-                            <th># Ratings</th>
-                            <th>Status</th>
-                            <th>Distance (walk)</th>
-                            <th>Map</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-body">
-                        <!-- Results will be inserted here by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- 🛒 Supermarket filter -->
+        <div class="supermarket-filter-container hidden">
+          <label for="supermarket-type-filter">Market Type:</label>
+          <select id="supermarket-type-filter" class="supermarket-type-filter">
+            <option value="all">All</option>
+            <option value="supermarket">Supermarkets</option>
+            <option value="convenience store">Convenience Stores</option>
+            <option value="local market">Local Markets</option>
+            <option value="general store">General Stores</option>
+          </select>
         </div>
+
+        <!-- 🛏️ Hostel filter -->
+        <div class="hostel-filter-container hidden">
+          <label for="hostel-type-filter">Type:</label>
+          <select id="hostel-type-filter" class="hostel-type-filter">
+            <option value="all">All</option>
+            <option value="hostel">Hostels</option>
+            <option value="hotel">Hotels</option>
+            <option value="lodging">Other Lodging</option>
+          </select>
+        </div>
+      </div>
     </div>
+    <!-- ✅ End sticky controls -->
 
-    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
+    <!-- Results section -->
+    <div id="results-section" class="results-container hidden">
+      <div class="table-container">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th> 
+              <th>Rating</th>
+              <th># Ratings</th>
+              <th>Status</th>
+              <th>Distance (walk)</th>
+              <th>Map</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <!-- Results will be inserted here by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
 </body>
 </html>

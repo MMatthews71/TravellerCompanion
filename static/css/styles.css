@@ -62,13 +62,25 @@ h1 {
 }
 
 /* =========================
+   Controls Bar (sticky)
+   ========================= */
+.controls-bar {
+    position: sticky;
+    top: 0;
+    background: #f9f9f9;
+    z-index: 1000;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* =========================
    Service Buttons
    ========================= */
 .services {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .service-btn {
@@ -171,7 +183,6 @@ h1 {
 /* =========================
    Filters
    ========================= */
-/* Hidden by default */
 .sort-options .food-filter-container,
 .sort-options .supermarket-filter-container,
 .sort-options .hostel-filter-container {
@@ -184,7 +195,6 @@ h1 {
     padding: 4px 8px;
 }
 
-/* Show when .hidden is removed by JS */
 .sort-options .food-filter-container:not(.hidden),
 .sort-options .supermarket-filter-container:not(.hidden),
 .sort-options .hostel-filter-container:not(.hidden) {
@@ -215,11 +225,6 @@ h1 {
 /* =========================
    Table
    ========================= */
-
-/* Remove scroll box behavior */
-
-/* Remove sticky header */
-
 .table-container {
     overflow-x: auto;
     max-height: none;
@@ -244,8 +249,7 @@ th {
     font-weight: 600;
     color: var(--dark-gray);
     white-space: nowrap;
-    /* REMOVE sticky behavior */
-    position: static;   /* ✅ behave like normal table */
+    position: static;   /* behave like normal table */
     top: auto;
     z-index: auto;
     box-shadow: none;
