@@ -589,15 +589,6 @@ if (currentService !== 'food' && place.price_level !== undefined) {
     infoContainer.appendChild(priceItem);
 }
 
-// Add map link to info container
-if (place.place_id) {
-    const mapItem = document.createElement('div');
-    mapItem.classList.add('about-item');
-    mapItem.style.margin = '0';
-    mapItem.innerHTML = `📍 <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Map</a>`;
-    infoContainer.appendChild(mapItem);
-}
-
 // Add about items to info container
 if (data.about && data.about.length > 0) {
     data.about.forEach(item => {
@@ -620,6 +611,15 @@ if (data.about && data.about.length > 0) {
         
         infoContainer.appendChild(itemDiv);
     });
+
+}
+// Add map link to info container
+if (place.place_id) {
+    const mapItem = document.createElement('div');
+    mapItem.classList.add('about-item');
+    mapItem.style.margin = '0';
+    mapItem.innerHTML = `📍 <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Map</a>`;
+    infoContainer.appendChild(mapItem);
 }
 
 aboutSection.appendChild(infoContainer);
