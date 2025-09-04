@@ -244,6 +244,34 @@ table {
     table-layout: fixed;
 }
 
+/* Table column widths - responsive design */
+#results-table th:first-child,
+#results-table td:first-child {
+    width: 45%;  /* More space for the Name column */
+    min-width: 200px;
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 12px;  /* Add some left padding for better spacing */
+}
+
+/* Evenly distribute remaining columns */
+#results-table th:not(:first-child),
+#results-table td:not(:first-child) {
+    width: calc(55% / 6);  /* Remaining space divided by 6 columns */
+    min-width: 60px;  /* Ensure columns don't get too narrow */
+    text-align: center;
+    padding: 8px 4px;
+}
+
+/* Make category column slightly wider */
+#results-table th:nth-child(2),
+#results-table td:nth-child(2) {
+    width: 12%;
+    min-width: 80px;
+}
+
 /* Adjust column widths when price column is hidden */
 #results-table th:nth-child(3),
 #results-table td:nth-child(3) {
@@ -299,11 +327,65 @@ table {
     color: #555;
 }
 
-th, td {
-    padding: 10px 15px;
+th {
+    padding: 14px 8px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
-    line-height: 1.3;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+    color: #2c3e50;
+    background-color: #f5f7fa;
+    text-transform: uppercase;
+    font-size: 0.75em;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.05);
+}
+
+td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    line-height: 1.4;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover effect for rows */
+tr:hover td {
+    background-color: #f9f9f9;
+}
+
+/* Status badges */
+.status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-align: center;
+    min-width: 60px;
+}
+
+.status.open {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status.closed {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.status.unknown {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+/* Center align all columns except the first */
+#results-table th:not(:first-child),
+#results-table td:not(:first-child) {
+    text-align: center;
 }
 
 /* Price column styling */
