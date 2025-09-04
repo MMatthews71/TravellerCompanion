@@ -77,19 +77,21 @@ def search():
                         "place_id": place.get("place_id"),
                         "location": place.get("geometry", {}).get("location", {}),
                         "category": cat,  # store category for filtering
-                        "icon": place.get("icon"),  # ✅ add icon
+                        "icon": place.get("icon"),  # add icon
                         "icon_base": place.get("icon_mask_base_uri"),
-                        "icon_bg": place.get("icon_background_color")
+                        "icon_bg": place.get("icon_background_color"),
+                        "price_level": place.get("price_level"),  # Add price level
+                        "types": place.get("types", []),  # Add types for filtering
                     })
         else:
-            # ✅ Normal case — just one keyword
+            # Normal case — just one keyword
             places_result = gmaps.places_nearby(
                 location=(lat, lng),
                 radius=1000,
                 keyword=keyword,
             )
             for place in places_result.get("results", []):
-                results.append({
+                place_data = {
                     "name": place.get("name", "N/A"),
                     "address": place.get("vicinity", "N/A"),
                     "rating": place.get("rating", "N/A"),
@@ -98,10 +100,13 @@ def search():
                     "place_id": place.get("place_id"),
                     "location": place.get("geometry", {}).get("location", {}),
                     "category": keyword,
-                    "icon": place.get("icon"),  # ✅ add icon
+                    "icon": place.get("icon"),
                     "icon_base": place.get("icon_mask_base_uri"),
-                    "icon_bg": place.get("icon_background_color")
-                })
+                    "icon_bg": place.get("icon_background_color"),
+                    "price_level": place.get("price_level"),
+                    "types": place.get("types", [])
+                }
+                results.append(place_data)
 
         return jsonify({"status": "success", "results": results})
 

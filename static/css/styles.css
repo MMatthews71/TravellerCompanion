@@ -250,6 +250,13 @@ th, td {
     line-height: 1.3;
 }
 
+/* Price column styling */
+td:nth-child(3) {
+    color: #2e7d32;  /* Green color for prices */
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 th {
     background-color: #f8f9fa;
     font-weight: 600;

@@ -299,7 +299,7 @@ function displayResults(results) {
     if (!results || results.length === 0) {
         const row = document.createElement('tr');
         const cell = document.createElement('td');
-        cell.colSpan = 7;
+        cell.colSpan = 8; // Updated to account for the new Price column
         cell.textContent = 'No locations found.';
         cell.className = 'no-results';
         row.appendChild(cell);
@@ -333,7 +333,6 @@ function displayResults(results) {
         nameText.textContent = place.name;
         name.appendChild(nameText);
 
-
         const category = document.createElement('td');
         let categoryValue;
         if (currentService === 'hostel') {
@@ -354,6 +353,14 @@ function displayResults(results) {
         }
         const formattedCategory = formatCategoryName(categoryValue);
         category.textContent = formattedCategory;
+
+        // Add price level
+        const price = document.createElement('td');
+        if (place.price_level !== undefined) {
+            price.textContent = '$$$$'.substring(0, Math.min(place.price_level, 4)) || 'N/A';
+        } else {
+            price.textContent = 'N/A';
+        }
 
         const rating = document.createElement('td');
         rating.textContent = place.rating !== 'N/A' ? place.rating : 'N/A';
@@ -397,6 +404,7 @@ function displayResults(results) {
 
         row.appendChild(name);
         row.appendChild(category);
+        row.appendChild(price);
         row.appendChild(rating);
         row.appendChild(totalRatings);
         row.appendChild(status);
