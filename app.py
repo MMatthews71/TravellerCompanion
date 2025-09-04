@@ -76,7 +76,10 @@ def search():
                         "open_now": place.get("opening_hours", {}).get("open_now", False),
                         "place_id": place.get("place_id"),
                         "location": place.get("geometry", {}).get("location", {}),
-                        "category": cat  # store category for filtering
+                        "category": cat,  # store category for filtering
+                        "icon": place.get("icon"),  # ✅ add icon
+                        "icon_base": place.get("icon_mask_base_uri"),
+                        "icon_bg": place.get("icon_background_color")
                     })
         else:
             # ✅ Normal case — just one keyword
@@ -94,7 +97,10 @@ def search():
                     "open_now": place.get("opening_hours", {}).get("open_now", False),
                     "place_id": place.get("place_id"),
                     "location": place.get("geometry", {}).get("location", {}),
-                    "category": keyword
+                    "category": keyword,
+                    "icon": place.get("icon"),  # ✅ add icon
+                    "icon_base": place.get("icon_mask_base_uri"),
+                    "icon_bg": place.get("icon_background_color")
                 })
 
         return jsonify({"status": "success", "results": results})

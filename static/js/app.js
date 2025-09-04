@@ -310,7 +310,21 @@ function displayResults(results) {
         row.dataset.placeId = place.place_id;
 
         const name = document.createElement('td');
-        name.textContent = place.name;
+
+        // Add icon if available
+        if (place.icon) {
+            const iconImg = document.createElement('img');
+            iconImg.src = place.icon;
+            iconImg.alt = place.name;
+            iconImg.className = "place-icon"; // we'll style this
+            name.appendChild(iconImg);
+        }
+
+        // Add the name text
+        const nameText = document.createElement('span');
+        nameText.textContent = place.name;
+        name.appendChild(nameText);
+
 
         const category = document.createElement('td');
         let categoryValue;
