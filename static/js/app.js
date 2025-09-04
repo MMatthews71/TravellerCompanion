@@ -67,7 +67,7 @@ async function handleServiceClick(button) {
         'food': 'restaurants',
         'atm': 'ATMs',
         'hostel': 'hostels',
-        'bus_station': 'bus stops'
+        'bus_station': 'transport'
     };
     
     const displayText = pluralForms[service] || `${serviceName}s`;
@@ -178,7 +178,7 @@ async function handleServiceClick(button) {
             'food': { singular: 'restaurant', plural: 'restaurants' },
             'atm': { singular: 'ATM', plural: 'ATMs' },
             'hostel': { singular: 'hostel', plural: 'hostels' },
-            'bus_station': { singular: 'bus stop', plural: 'bus stops' }
+            'bus_station': { singular: 'transport', plural: 'transport' }
         };
         
         const serviceInfo = pluralForms[service] || { singular: serviceName.toLowerCase(), plural: `${serviceName.toLowerCase()}s` };
