@@ -215,11 +215,16 @@ h1 {
 /* =========================
    Table
    ========================= */
+
+/* Remove scroll box behavior */
+
+/* Remove sticky header */
+
 .table-container {
     overflow-x: auto;
-    max-height: 80vh;
+    max-height: none;
     display: block;
-    position: relative;
+    position: static;
 }
 
 table {
@@ -239,10 +244,11 @@ th {
     font-weight: 600;
     color: var(--dark-gray);
     white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    /* REMOVE sticky behavior */
+    position: static;   /* ✅ behave like normal table */
+    top: auto;
+    z-index: auto;
+    box-shadow: none;
 }
 
 tr:hover {
