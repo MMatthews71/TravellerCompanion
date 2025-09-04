@@ -289,6 +289,11 @@ function toRad(degrees) { return degrees * (Math.PI / 180); }
 function displayResults(results) {
     clearResults();
     const resultsSection = document.getElementById('results-section');
+    const sortOptions = document.getElementById('sort-options');
+    
+    // Hide sort options by default
+    sortOptions.classList.add('hidden');
+    
     resultsSection.classList.remove('hidden');
 
     if (!results || results.length === 0) {
@@ -301,6 +306,9 @@ function displayResults(results) {
         resultsBody.appendChild(row);
         return;
     }
+    
+    // Show sort options since we have results
+    sortOptions.classList.remove('hidden');
 
     const sortedResults = sortResults(results, currentSort);
 
