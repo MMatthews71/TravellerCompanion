@@ -241,6 +241,39 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* Adjust column widths when price column is hidden */
+#results-table th:nth-child(3),
+#results-table td:nth-child(3) {
+    width: 70px;
+}
+
+/* When price column is hidden, adjust other columns */
+#results-table th:nth-child(3)[style*="display: none"],
+#results-table td:nth-child(3)[style*="display: none"] {
+    display: none;
+}
+
+/* Adjust column indexes when price column is hidden */
+#results-table th:nth-child(3)[style*="display: none"] ~ th,
+#results-table td:nth-child(3)[style*="display: none"] ~ td {
+    position: relative;
+    left: -70px; /* Same as the width of the price column */
+}
+
+/* About section styles */
+.about-section {
+    margin-bottom: 20px;
+}
+
+.about-item {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 14px;
 }
 
 th, td {

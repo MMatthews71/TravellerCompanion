@@ -312,6 +312,12 @@ function displayResults(results) {
 
     const sortedResults = sortResults(results, currentSort);
 
+    // Show/hide price column header based on current service
+    const priceHeader = document.querySelector('th:nth-child(3)');
+    if (priceHeader) {
+        priceHeader.style.display = currentService === 'food' ? 'table-cell' : 'none';
+    }
+
     sortedResults.forEach(place => {
         const row = document.createElement('tr');
         row.classList.add('place-row');
@@ -404,7 +410,12 @@ function displayResults(results) {
 
         row.appendChild(name);
         row.appendChild(category);
-        row.appendChild(price);
+        
+        // Only show price column for food service
+        if (currentService === 'food') {
+            row.appendChild(price);
+        }
+        
         row.appendChild(rating);
         row.appendChild(totalRatings);
         row.appendChild(status);
@@ -536,10 +547,18 @@ async function toggleDetailsRow(place, row) {
         detailsCell.innerHTML = '';
 
 // About info section (if available)
-if (data.about && data.about.length > 0) {
-    const aboutSection = document.createElement('div');
-    aboutSection.classList.add('about-section');
+const aboutSection = document.createElement('div');
+aboutSection.classList.add('about-section');
 
+// Add price level to about section if not food service
+if (currentService !== 'food' && place.price_level !== undefined) {
+    const priceItem = document.createElement('div');
+    priceItem.classList.add('about-item');
+    priceItem.innerHTML = `<strong>Price Level:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
+    aboutSection.appendChild(priceItem);
+}
+
+if (data.about && data.about.length > 0) {
     const aboutTitle = document.createElement('h4');
     aboutTitle.textContent = "About this place";
     aboutSection.appendChild(aboutTitle);
@@ -565,9 +584,9 @@ if (data.about && data.about.length > 0) {
     });
     
     aboutSection.appendChild(aboutList);
-
-    detailsCell.appendChild(aboutSection);
 }
+
+detailsCell.appendChild(aboutSection);
 
         // Photos section (if available)
         if (data.photos && data.photos.length > 0) {
