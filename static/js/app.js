@@ -310,10 +310,11 @@ function displayResults(results) {
         status.appendChild(statusBadge);
 
         const distance = document.createElement('td');
-        distance.textContent = `${place.distance} km`;
+        const walkingMinutes = Math.round((place.distance / 5) * 60); // 5 km/h speed
+        distance.textContent = `${place.distance} km (~${walkingMinutes} min walk)`;
 
         const mapLink = document.createElement('td');
-        if (place.place_id) {
+        if (place.place_id) {       
             const link = document.createElement('a');
             link.href = `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
             link.target = '_blank';
