@@ -405,3 +405,8 @@ tr:hover {
     margin-right: 6px;
     vertical-align: middle;
 }
+.status.unknown {
+    background-color: #ccc;
+    color: #333;
+  }
+  

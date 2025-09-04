@@ -94,7 +94,7 @@ def search():
                     "address": place.get("vicinity", "N/A"),
                     "rating": place.get("rating", "N/A"),
                     "total_ratings": place.get("user_ratings_total", 0),
-                    "open_now": place.get("opening_hours", {}).get("open_now", False),
+                    "open_now": place.get("opening_hours", {}).get("open_now"),
                     "place_id": place.get("place_id"),
                     "location": place.get("geometry", {}).get("location", {}),
                     "category": keyword,

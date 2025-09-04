@@ -355,9 +355,20 @@ function displayResults(results) {
 
         const status = document.createElement('td');
         const statusBadge = document.createElement('span');
-        statusBadge.className = `status ${place.open_now ? 'open' : 'closed'}`;
-        statusBadge.textContent = place.open_now ? 'Open' : 'Closed';
+
+        if (place.open_now === true) {
+            statusBadge.className = 'status open';
+            statusBadge.textContent = 'Open';
+        } else if (place.open_now === false) {
+            statusBadge.className = 'status closed';
+            statusBadge.textContent = 'Closed';
+        } else {
+            statusBadge.className = 'status unknown';
+            statusBadge.textContent = 'Unknown';
+        }
+
         status.appendChild(statusBadge);
+
 
         const distance = document.createElement('td');
         const walkingMinutes = Math.round((place.distance / 5) * 60); // 5 km/h speed
