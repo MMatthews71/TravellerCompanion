@@ -150,10 +150,15 @@ h1 {
 
 .sort-options {
     margin: 15px 0;
+    padding: 0 10px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 /* Hide food-specific sort options by default */
@@ -168,7 +173,8 @@ h1 {
 
 .sort-options span {
     font-weight: 500;
-    margin-right: 10px;
+    margin-right: 8px;
+    white-space: nowrap;
 }
 
 /* Sort buttons */
@@ -180,6 +186,8 @@ h1 {
     background: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .sort-btn.active {
@@ -238,50 +246,58 @@ h1 {
    Table
    ========================= */
 .table-container {
+    width: 100%;
     overflow-x: auto;
-    max-height: none;
-    display: block;
-    position: static;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -10px;
+    padding: 0 10px;
 }
 
 table {
     width: 100%;
+    min-width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
+    margin: 0;
+    padding: 0;
 }
 
 /* Table column widths - responsive design */
 #results-table th:first-child,
 #results-table td:first-child {
-    width: 45%;  /* More space for the Name column */
-    min-width: 200px;
-    max-width: 400px;
+    width: 35%;
+    min-width: 150px;
+    max-width: 300px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-left: 12px;  /* Add some left padding for better spacing */
+    padding: 8px 12px;
 }
 
 /* Evenly distribute remaining columns */
 #results-table th:not(:first-child),
 #results-table td:not(:first-child) {
-    width: calc(55% / 6);  /* Remaining space divided by 6 columns */
-    min-width: 60px;  /* Ensure columns don't get too narrow */
+    width: auto;
+    min-width: 50px;
+    max-width: 80px;
     text-align: center;
     padding: 8px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Make category column slightly wider */
 #results-table th:nth-child(2),
 #results-table td:nth-child(2) {
-    width: 12%;
-    min-width: 80px;
+    width: auto;
+    min-width: 70px;
 }
 
 /* Adjust column widths when price column is hidden */
 #results-table th:nth-child(3),
 #results-table td:nth-child(3) {
-    width: 70px;
+    width: 60px;
 }
 
 /* When price column is hidden, adjust other columns */
