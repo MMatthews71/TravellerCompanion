@@ -59,7 +59,19 @@ async function handleServiceClick(button) {
     document.querySelector('.supermarket-filter-container')?.classList.add('hidden');
     document.querySelector('.hostel-filter-container')?.classList.add('hidden'); 
     
-    showStatus(`Finding nearby ${serviceName.toLowerCase()}...`, 'info');
+    // Map service names to their plural forms
+    const pluralForms = {
+        'laundry': 'laundries',
+        'pharmacy': 'pharmacies',
+        'supermarket': 'supermarkets',
+        'food': 'restaurants',
+        'atm': 'ATMs',
+        'hostel': 'hostels',
+        'bus_station': 'bus stops'
+    };
+    
+    const displayText = pluralForms[service] || `${serviceName}s`;
+    showStatus(`Finding nearby ${displayText}...`, 'info');
 
     try {
         const position = await getCurrentLocation();
@@ -158,11 +170,25 @@ async function handleServiceClick(button) {
 
         currentResults = results;
 
+        // Map service names to their plural forms
+        const pluralForms = {
+            'laundry': { singular: 'laundry', plural: 'laundries' },
+            'pharmacy': { singular: 'pharmacy', plural: 'pharmacies' },
+            'supermarket': { singular: 'supermarket', plural: 'supermarkets' },
+            'food': { singular: 'restaurant', plural: 'restaurants' },
+            'atm': { singular: 'ATM', plural: 'ATMs' },
+            'hostel': { singular: 'hostel', plural: 'hostels' },
+            'bus_station': { singular: 'bus stop', plural: 'bus stops' }
+        };
+        
+        const serviceInfo = pluralForms[service] || { singular: serviceName.toLowerCase(), plural: `${serviceName.toLowerCase()}s` };
+        
         if (results.length === 0) {
-            showStatus(`No ${serviceName.toLowerCase()} found nearby.`, 'info');
+            showStatus(`No ${serviceInfo.plural} found nearby.`, 'info');
             clearResults();
         } else {
-            showStatus(`Found ${results.length} ${serviceName.toLowerCase()} nearby.`, 'info');
+            const countText = results.length === 1 ? serviceInfo.singular : serviceInfo.plural;
+            showStatus(`Found ${results.length} ${countText} nearby.`, 'info');
             displayResults(results);
         }
     } catch (error) {
