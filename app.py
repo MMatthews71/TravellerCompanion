@@ -141,23 +141,50 @@ def place_details():
             price_text = levels[result["price_level"]] if result["price_level"] < len(levels) else "N/A"
             about_info.append(f"💲 Price: {price_text}")
 
+        # ✅ Compact opening hours formatter
         if "opening_hours" in result:
             hours = result["opening_hours"].get("weekday_text", [])
             if hours:
-                # Case 1: all days 24h
-                if all("Open 24 hours" in h for h in hours):
-                    about_info.append("🕒 Open 24/7")
+                def simplify_hours(hours_list):
+                    """Convert Google weekday_text into compact readable format."""
+                    day_map = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-                # Case 2: all days same hours (not 24h)
-                elif len(set(h.split(": ", 1)[1] for h in hours)) == 1:
-                    uniform = hours[0].split(": ", 1)[1]
-                    about_info.append(f"🕒 Daily: {uniform}")
+                    # Parse into tuples (day, hours_string)
+                    parsed = []
+                    for i, entry in enumerate(hours_list):
+                        try:
+                            _, hrs = entry.split(": ", 1)
+                        except ValueError:
+                            hrs = entry
+                        parsed.append((day_map[i], hrs))
 
-                # Case 3: fallback → include shortened list
-                else:
-                    compact = "; ".join(h.replace("day: ", "") for h in hours)
-                    about_info.append(f"🕒 {compact}")
+                    # Group consecutive days with the same hours
+                    groups = []
+                    for day, hrs in parsed:
+                        if not groups or groups[-1]["hours"] != hrs:
+                            groups.append({"days": [day], "hours": hrs})
+                        else:
+                            groups[-1]["days"].append(day)
 
+                    # Format groups compactly
+                    parts = []
+                    for g in groups:
+                        days = g["days"]
+                        if len(days) == 1:
+                            label = days[0]
+                        else:
+                            label = f"{days[0]}–{days[-1]}"
+                        parts.append(f"{label}: {g['hours']}")
+
+                    # Special simplifications
+                    if len(groups) == 1 and "Open 24 hours" in groups[0]["hours"]:
+                        return "🕒 Open 24/7"
+                    elif len(groups) == 1:
+                        return f"🕒 Daily: {groups[0]['hours']}"
+                    else:
+                        return "🕒 " + " | ".join(parts)
+
+                about_info.append(simplify_hours(hours))
 
         if "types" in result:
             types = [t.replace("_", " ").title() for t in result["types"]]
