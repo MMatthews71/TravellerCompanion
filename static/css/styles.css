@@ -265,15 +265,38 @@ table {
 
 /* About section styles */
 .about-section {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .about-item {
-    margin-bottom: 8px;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background-color: #f8f9fa;
     border-radius: 4px;
+    font-size: 13px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.about-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.about-item a:hover {
+    text-decoration: underline;
+    color: #2980b9;
+}
+
+.about-section h4 {
+    width: 100%;
+    margin: 8px 0 6px 0;
     font-size: 14px;
+    color: #555;
 }
 
 th, td {

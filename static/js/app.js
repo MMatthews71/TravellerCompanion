@@ -542,7 +542,7 @@ aboutSection.classList.add('about-section');
 if (currentService !== 'food' && place.price_level !== undefined) {
     const priceItem = document.createElement('div');
     priceItem.classList.add('about-item');
-    priceItem.innerHTML = `<strong>Price Level:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
+    priceItem.innerHTML = `💰 <strong>Price:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
     aboutSection.appendChild(priceItem);
 }
 
@@ -550,7 +550,7 @@ if (currentService !== 'food' && place.price_level !== undefined) {
 if (place.place_id) {
     const mapItem = document.createElement('div');
     mapItem.classList.add('about-item');
-    mapItem.innerHTML = `<a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Google Maps</a>`;
+    mapItem.innerHTML = `📍 <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Map</a>`;
     aboutSection.appendChild(mapItem);
 }
 
@@ -559,27 +559,34 @@ if (data.about && data.about.length > 0) {
     aboutTitle.textContent = "About this place";
     aboutSection.appendChild(aboutTitle);
 
-    const aboutList = document.createElement('ul');
-    data.about.forEach(item => {
-        const li = document.createElement('li');
+    // Create a flex container for about items
+    const aboutItemsContainer = document.createElement('div');
+    aboutItemsContainer.style.display = 'flex';
+    aboutItemsContainer.style.flexWrap = 'wrap';
+    aboutItemsContainer.style.gap = '8px';
+    aboutItemsContainer.style.marginTop = '6px';
     
+    data.about.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('about-item');
+        
         // Detect website entries and make them clickable
-        if (item.startsWith("🌐 Website: ")) {
+        if (item.startsWith("🌐 Website: ") || item.includes("http")) {
             const url = item.replace("🌐 Website: ", "").trim();
             const link = document.createElement('a');
             link.href = url;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
             link.textContent = "🌐 Website";
-            li.appendChild(link);
+            itemDiv.appendChild(link);
         } else {
-            li.textContent = item;
+            itemDiv.textContent = item;
         }
-    
-        aboutList.appendChild(li);
+        
+        aboutItemsContainer.appendChild(itemDiv);
     });
     
-    aboutSection.appendChild(aboutList);
+    aboutSection.appendChild(aboutItemsContainer);
 }
 
 detailsCell.appendChild(aboutSection);
