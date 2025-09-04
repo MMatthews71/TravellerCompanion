@@ -1,5 +1,7 @@
-/* Base Styles */
-:root {
+/* =========================
+   Base Styles & Variables
+   ========================= */
+   :root {
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
     --danger-color: #e74c3c;
@@ -19,7 +21,7 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: #333;
+    color: var(--dark-gray);
     background-color: #f9f9f9;
     padding: 20px;
 }
@@ -30,7 +32,9 @@ body {
     padding: 0 15px;
 }
 
-/* Header */
+/* =========================
+   Header
+   ========================= */
 header {
     text-align: center;
     margin-bottom: 30px;
@@ -44,7 +48,22 @@ h1 {
     font-size: 2.2rem;
 }
 
-/* Services */
+.user-location {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* =========================
+   Service Buttons
+   ========================= */
 .services {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -54,7 +73,6 @@ h1 {
 
 .service-btn {
     padding: 10px 15px;
-    margin: 5px;
     border: none;
     border-radius: 5px;
     background-color: #4a6fa5;
@@ -67,37 +85,15 @@ h1 {
     justify-content: center;
 }
 
-.food-filter-container {
-    display: inline-flex;
-    align-items: center;
-    margin: 5px;
-}
-
-.food-type-filter {
-    margin-left: 5px;
-    padding: 8px 12px;
-    border: 1px solid #4a6fa5;
-    border-radius: 5px;
-    background-color: white;
-    color: #333;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.food-type-filter:hover {
-    border-color: #3a5a8c;
-    background-color: #f5f8ff;
-}
-
 .service-btn:hover {
     background-color: var(--primary-color);
-    color: white;
     transform: translateY(-2px);
     box-shadow: var(--shadow);
 }
 
-/* Status Message */
+/* =========================
+   Status Messages
+   ========================= */
 .status-message {
     padding: 15px;
     margin: 15px 0;
@@ -123,7 +119,9 @@ h1 {
     border-left: 4px solid var(--danger-color);
 }
 
-/* Results */
+/* =========================
+   Results & Sorting
+   ========================= */
 .results-container {
     background-color: white;
     border-radius: 8px;
@@ -133,33 +131,36 @@ h1 {
 }
 
 .sort-options {
-    padding: 15px 20px;
-    background-color: var(--light-gray);
-    border-bottom: 1px solid var(--border-color);
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: var(--light-gray);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
 }
 
 .sort-options span {
-    margin-right: 10px;
     font-weight: 500;
+    margin-right: 10px;
 }
 
+/* Sort buttons */
 .sort-btn {
-    padding: 5px 12px;
-    background: none;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    background: #fff;
     cursor: pointer;
-    font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
 .sort-btn.active {
-    background-color: var(--primary-color);
-    color: white;
+    background: var(--primary-color);
+    color: #fff;
     border-color: var(--primary-color);
 }
 
@@ -167,6 +168,53 @@ h1 {
     background-color: #f0f0f0;
 }
 
+/* =========================
+   Filters
+   ========================= */
+/* Hidden by default */
+.sort-options .food-filter-container,
+.sort-options .supermarket-filter-container,
+.sort-options .hostel-filter-container {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+/* Show when .hidden is removed by JS */
+.sort-options .food-filter-container:not(.hidden),
+.sort-options .supermarket-filter-container:not(.hidden),
+.sort-options .hostel-filter-container:not(.hidden) {
+    display: flex;
+}
+
+.sort-options label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+.sort-options select {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.sort-options select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* =========================
+   Table
+   ========================= */
 .table-container {
     overflow-x: auto;
     max-height: 80vh;
@@ -177,7 +225,6 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
-    position: relative;
 }
 
 th, td {
@@ -202,6 +249,7 @@ tr:hover {
     background-color: #f5f9ff;
 }
 
+/* Status badges */
 .status {
     display: inline-block;
     padding: 4px 8px;
@@ -230,7 +278,47 @@ tr:hover {
     text-decoration: underline;
 }
 
-/* Loading Animation */
+/* =========================
+   Details Row & Photos
+   ========================= */
+.details-row td {
+    background: #fafafa;
+    padding: 10px;
+}
+
+.photo-gallery {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 0;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+}
+
+.photo-wrapper {
+    flex: 0 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease-in-out;
+}
+
+.photo-wrapper:hover {
+    transform: scale(1.05);
+}
+
+.photo-wrapper img {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+/* =========================
+   Loading Animation
+   ========================= */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -248,28 +336,16 @@ tr:hover {
     vertical-align: middle;
 }
 
-/* Hidden Class */
+/* =========================
+   Utility
+   ========================= */
 .hidden {
     display: none;
 }
-.details-row td {
-  background: #fafafa;
-  padding: 10px;
-}
 
-.photo-gallery {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-}
-
-.photo-gallery img {
-  height: 120px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-/* Responsive Design */
+/* =========================
+   Responsive Design
+   ========================= */
 @media (max-width: 768px) {
     .services {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -312,58 +388,4 @@ tr:hover {
         padding: 8px 6px;
         font-size: 0.85rem;
     }
-}
-
-/* Photo gallery container */
-.photo-gallery {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    padding: 10px 0;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-}
-
-/* Individual image wrapper */
-.photo-wrapper {
-    flex: 0 0 auto;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease-in-out;
-}
-
-/* Hover effect */
-.photo-wrapper:hover {
-    transform: scale(1.05);
-}
-
-/* Images */
-.photo-wrapper img {
-    width: 200px;
-    height: 150px;
-    object-fit: cover;
-    display: block;
-    cursor: pointer;
-    border-radius: 8px;
-}
-.location-display {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-.user-location {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 14px;
-    color: #333;
-    font-weight: bold;
 }

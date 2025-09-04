@@ -57,7 +57,8 @@ async function handleServiceClick(button) {
     // Hide filters by default
     document.querySelector('.food-filter-container')?.classList.add('hidden');
     document.querySelector('.supermarket-filter-container')?.classList.add('hidden');
-
+    document.querySelector('.hostel-filter-container')?.classList.add('hidden'); 
+    
     showStatus(`Finding nearby ${serviceName.toLowerCase()}...`, 'info');
 
     try {
