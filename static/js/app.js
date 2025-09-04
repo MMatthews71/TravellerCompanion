@@ -291,6 +291,15 @@ function displayResults(results) {
         if (currentService === 'hostel') {
             // For hostels, use the category from the place object first
             categoryValue = place.category || place.types?.[0] || 'lodging';
+        } else if (currentService === 'laundry') {
+            // For laundry, use the specific category
+            categoryValue = 'laundry';
+        } else if (currentService === 'pharmacy') {
+            // For pharmacy, use the specific category
+            categoryValue = 'pharmacy';
+        } else if (currentService === 'atm') {
+            // For ATM, use the specific category
+            categoryValue = 'atm';
         } else {
             // For other services, use the existing logic
             categoryValue = place.foodCategory || place.supermarketCategory || 'general';
@@ -416,6 +425,8 @@ function formatCategoryName(category) {
         'hostel': 'Hostel',
         'hotel': 'Hotel',
         'lodging': 'Lodging',
+        'laundry': 'Laundry',
+        'atm': 'ATM',
         'general': 'General'
     };
     
