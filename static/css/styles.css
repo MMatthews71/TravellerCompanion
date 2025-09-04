@@ -335,9 +335,9 @@
   .photo-gallery {
     display: flex;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 12px;
     overflow-x: auto;
-    padding: 10px 0;
+    padding: 14px 0;
     margin: 10px 0;
     scrollbar-width: thin;
     scrollbar-color: #ccc transparent;
@@ -354,8 +354,8 @@
 
   .photo-wrapper {
     flex: 0 0 auto;
-    width: 120px;
-    height: 90px;
+    width: 180px;
+    height: 136px;
     border-radius: 6px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
