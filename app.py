@@ -122,7 +122,13 @@ def place_details():
     try:
         details = gmaps.place(
             place_id=place_id,
-            fields=["photo", "editorial_summary", "price_level", "opening_hours"]
+            fields=[
+                "photo",
+                "editorial_summary",
+                "price_level",
+                "opening_hours",
+                "website",  # ✅ include website
+            ]
         )
 
         result = details.get("result", {})
@@ -146,6 +152,10 @@ def place_details():
             levels = ["Free", "Inexpensive", "Moderate", "Expensive", "Very Expensive"]
             price_text = levels[result["price_level"]] if result["price_level"] < len(levels) else "N/A"
             about_info.append(f"💲 Price: {price_text}")
+
+        # ✅ Add website if available
+        if "website" in result:
+            about_info.append(f"🌐 Website: {result['website']}")
 
         # ✅ Compact opening hours formatter
         if "opening_hours" in result:

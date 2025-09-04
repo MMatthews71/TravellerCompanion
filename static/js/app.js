@@ -531,9 +531,23 @@ if (data.about && data.about.length > 0) {
     const aboutList = document.createElement('ul');
     data.about.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = item;
+    
+        // Detect website entries and make them clickable
+        if (item.startsWith("🌐 Website: ")) {
+            const url = item.replace("🌐 Website: ", "").trim();
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "🌐 Website";
+            li.appendChild(link);
+        } else {
+            li.textContent = item;
+        }
+    
         aboutList.appendChild(li);
     });
+    
     aboutSection.appendChild(aboutList);
 
     detailsCell.appendChild(aboutSection);
