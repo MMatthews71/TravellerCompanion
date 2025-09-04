@@ -57,7 +57,19 @@ async function handleServiceClick(button) {
     // Hide filters by default
     document.querySelector('.food-filter-container')?.classList.add('hidden');
     document.querySelector('.supermarket-filter-container')?.classList.add('hidden');
-    document.querySelector('.hostel-filter-container')?.classList.add('hidden'); 
+    document.querySelector('.hostel-filter-container')?.classList.add('hidden');
+    
+    // Show/hide cost sort button based on service
+    const costSortBtn = document.getElementById('sort-cost');
+    if (service === 'food') {
+        costSortBtn.classList.remove('hidden');
+    } else {
+        costSortBtn.classList.add('hidden');
+        // Reset to distance sort if not on food service
+        if (costSortBtn.classList.contains('active')) {
+            document.getElementById('sort-distance').click();
+        }
+    } 
     
     // Map service names to their plural forms
     const pluralForms = {
@@ -362,10 +374,11 @@ function displayResults(results) {
 
         // Add price level
         const price = document.createElement('td');
-        if (place.price_level !== undefined) {
-            price.textContent = '$$$$'.substring(0, Math.min(place.price_level, 4)) || 'N/A';
+        if (place.price_level !== undefined && place.price_level !== null) {
+            price.textContent = '$$$$'.substring(0, Math.min(place.price_level, 4));
         } else {
-            price.textContent = 'N/A';
+            price.textContent = '?';
+            price.style.opacity = '0.6'; // Make the ? slightly faded
         }
 
         const rating = document.createElement('td');
@@ -432,10 +445,22 @@ function handleSortClick(button) {
 function sortResults(results, sortBy) {
     const sorted = [...results];
     switch (sortBy) {
-        case 'distance': return sorted.sort((a, b) => a.distance - b.distance);
-        case 'rating': return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        case 'ratings': return sorted.sort((a, b) => (b.total_ratings || 0) - (a.total_ratings || 0));
-        default: return sorted;
+        case 'distance':
+            return sorted.sort((a, b) => a.distance - b.distance);
+        case 'rating':
+            return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        case 'ratings':
+            return sorted.sort((a, b) => (b.total_ratings || 0) - (a.total_ratings || 0));
+        case 'cost':
+            // Sort by price level (lower is more expensive), with nulls last
+            return sorted.sort((a, b) => {
+                // Treat undefined/null price levels as Infinity (will be sorted to the end)
+                const aPrice = (a.price_level !== undefined && a.price_level !== null) ? a.price_level : Infinity;
+                const bPrice = (b.price_level !== undefined && b.price_level !== null) ? b.price_level : Infinity;
+                return aPrice - bPrice;
+            });
+        default:
+            return sorted;
     }
 }
 

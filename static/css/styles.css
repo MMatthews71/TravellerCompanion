@@ -149,15 +149,21 @@ h1 {
 }
 
 .sort-options {
+    margin: 15px 0;
     display: flex;
-    flex-wrap: wrap;
+    gap: 10px;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 15px;
-    padding: 8px 12px;
-    background: var(--light-gray);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+/* Hide food-specific sort options by default */
+.food-sort {
+    display: none !important;
+}
+
+/* Show food-specific sort options when food service is active */
+.food-sort:not(.hidden) {
+    display: inline-block !important;
 }
 
 .sort-options span {
