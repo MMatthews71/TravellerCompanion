@@ -563,12 +563,14 @@ async function toggleDetailsRow(place, row) {
 const aboutSection = document.createElement('div');
 aboutSection.style.marginBottom = '15px';
 
-// Create the "About this place" title
+// Create the "About" title
 const aboutTitle = document.createElement('h4');
-aboutTitle.textContent = "About this place";
+aboutTitle.textContent = "About";
 aboutTitle.style.margin = '0 0 10px 0';
 aboutTitle.style.color = '#2c3e50';
 aboutTitle.style.fontSize = '1rem';
+aboutTitle.style.textAlign = 'left';
+aboutTitle.style.paddingLeft = '0';
 aboutSection.appendChild(aboutTitle);
 
 // Create container for the info items
