@@ -395,18 +395,7 @@ function displayResults(results) {
         const walkingMinutes = Math.round((place.distance / 5) * 60); // 5 km/h speed
         distance.textContent = `${walkingMinutes} min`;
 
-        const mapLink = document.createElement('td');
-        if (place.place_id) {       
-            const link = document.createElement('a');
-            link.href = `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.className = 'map-link';
-            link.textContent = 'View';
-            mapLink.appendChild(link);
-        } else {
-            mapLink.textContent = 'N/A';
-        }
+        // Map link will be moved to the about section
 
         row.appendChild(name);
         row.appendChild(category);
@@ -420,7 +409,6 @@ function displayResults(results) {
         row.appendChild(totalRatings);
         row.appendChild(status);
         row.appendChild(distance);
-        row.appendChild(mapLink);
 
         row.addEventListener('click', () => toggleDetailsRow(place, row));
 
@@ -525,7 +513,7 @@ async function toggleDetailsRow(place, row) {
     detailsRow.classList.add('details-row');
 
     const detailsCell = document.createElement('td');
-    detailsCell.colSpan = 7;
+    detailsCell.colSpan = 6; // Updated to match new column count
     detailsCell.textContent = 'Loading photos...';
     detailsRow.appendChild(detailsCell);
 
@@ -556,6 +544,14 @@ if (currentService !== 'food' && place.price_level !== undefined) {
     priceItem.classList.add('about-item');
     priceItem.innerHTML = `<strong>Price Level:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
     aboutSection.appendChild(priceItem);
+}
+
+// Add map link to about section
+if (place.place_id) {
+    const mapItem = document.createElement('div');
+    mapItem.classList.add('about-item');
+    mapItem.innerHTML = `<a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Google Maps</a>`;
+    aboutSection.appendChild(mapItem);
 }
 
 if (data.about && data.about.length > 0) {
