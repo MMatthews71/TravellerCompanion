@@ -559,41 +559,49 @@ async function toggleDetailsRow(place, row) {
 
         detailsCell.innerHTML = '';
 
-// About info section (if available)
+// Create main container for the about section
 const aboutSection = document.createElement('div');
-aboutSection.classList.add('about-section');
+aboutSection.style.marginBottom = '15px';
 
-// Add price level to about section if not food service
+// Create the "About this place" title
+const aboutTitle = document.createElement('h4');
+aboutTitle.textContent = "About this place";
+aboutTitle.style.margin = '0 0 10px 0';
+aboutTitle.style.color = '#2c3e50';
+aboutTitle.style.fontSize = '1rem';
+aboutSection.appendChild(aboutTitle);
+
+// Create container for the info items
+const infoContainer = document.createElement('div');
+infoContainer.style.display = 'flex';
+infoContainer.style.flexWrap = 'wrap';
+infoContainer.style.gap = '15px';
+infoContainer.style.alignItems = 'center';
+
+// Add price level to info container if not food service
 if (currentService !== 'food' && place.price_level !== undefined) {
     const priceItem = document.createElement('div');
     priceItem.classList.add('about-item');
+    priceItem.style.margin = '0';
     priceItem.innerHTML = `💰 <strong>Price:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
-    aboutSection.appendChild(priceItem);
+    infoContainer.appendChild(priceItem);
 }
 
-// Add map link to about section
+// Add map link to info container
 if (place.place_id) {
     const mapItem = document.createElement('div');
     mapItem.classList.add('about-item');
+    mapItem.style.margin = '0';
     mapItem.innerHTML = `📍 <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Map</a>`;
-    aboutSection.appendChild(mapItem);
+    infoContainer.appendChild(mapItem);
 }
 
+// Add about items to info container
 if (data.about && data.about.length > 0) {
-    const aboutTitle = document.createElement('h4');
-    aboutTitle.textContent = "About this place";
-    aboutSection.appendChild(aboutTitle);
-
-    // Create a flex container for about items
-    const aboutItemsContainer = document.createElement('div');
-    aboutItemsContainer.style.display = 'flex';
-    aboutItemsContainer.style.flexWrap = 'wrap';
-    aboutItemsContainer.style.gap = '8px';
-    aboutItemsContainer.style.marginTop = '6px';
-    
     data.about.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('about-item');
+        itemDiv.style.margin = '0';
         
         // Detect website entries and make them clickable
         if (item.startsWith("🌐 Website: ") || item.includes("http")) {
@@ -608,11 +616,11 @@ if (data.about && data.about.length > 0) {
             itemDiv.textContent = item;
         }
         
-        aboutItemsContainer.appendChild(itemDiv);
+        infoContainer.appendChild(itemDiv);
     });
-    
-    aboutSection.appendChild(aboutItemsContainer);
 }
+
+aboutSection.appendChild(infoContainer);
 
 detailsCell.appendChild(aboutSection);
 
