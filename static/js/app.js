@@ -492,36 +492,59 @@ async function toggleDetailsRow(place, row) {
         const data = await response.json();
         console.log("Photo fetch JSON:", data);
 
-        if (data.status === 'error' || !data.photos || data.photos.length === 0) {
-            detailsCell.textContent = 'No photos available.';
-            return;
+        detailsCell.innerHTML = '';
+
+// About info section (if available)
+if (data.about && data.about.length > 0) {
+    const aboutSection = document.createElement('div');
+    aboutSection.classList.add('about-section');
+
+    const aboutTitle = document.createElement('h4');
+    aboutTitle.textContent = "About this place";
+    aboutSection.appendChild(aboutTitle);
+
+    const aboutList = document.createElement('ul');
+    data.about.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        aboutList.appendChild(li);
+    });
+    aboutSection.appendChild(aboutList);
+
+    detailsCell.appendChild(aboutSection);
+}
+
+        // Photos section (if available)
+        if (data.photos && data.photos.length > 0) {
+            const gallery = document.createElement('div');
+            gallery.classList.add('photo-gallery');
+
+            data.photos.forEach(url => {
+                const imgWrapper = document.createElement('div');
+                imgWrapper.classList.add('photo-wrapper');
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = place.name;
+                img.loading = "lazy";
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+
+                link.appendChild(img);
+                imgWrapper.appendChild(link);
+                gallery.appendChild(imgWrapper);
+            });
+
+            detailsCell.appendChild(gallery);
+        } else {
+            if (!data.about || data.about.length === 0) {
+                detailsCell.textContent = 'No details available.';
+            }
         }
 
-        detailsCell.innerHTML = '';
-        const gallery = document.createElement('div');
-        gallery.classList.add('photo-gallery');
-
-        data.photos.forEach(url => {
-            const imgWrapper = document.createElement('div');
-            imgWrapper.classList.add('photo-wrapper');
-
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = place.name;
-            img.loading = "lazy";
-
-            // Make image clickable
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-
-            link.appendChild(img);
-            imgWrapper.appendChild(link);
-            gallery.appendChild(imgWrapper);
-        });
-
-        detailsCell.appendChild(gallery);
     } catch (err) {
         console.error('Photo fetch error:', err);
         detailsCell.textContent = '❌ Failed to load photos.';

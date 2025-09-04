@@ -104,21 +104,25 @@ def search():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
-# Place details (photos)
+# Place details (photos + about info)
 # -----------------------------
 @app.route("/place-details")
 def place_details():
-    """Fetch photos for a place via Google Places Details API"""
+    """Fetch details + photos for a place via Google Places Details API"""
     place_id = request.args.get("place_id")
     if not place_id:
         return jsonify({"status": "error", "message": "Missing place_id"}), 400
 
     try:
-        details = gmaps.place(place_id=place_id, fields=["photo"])
-        photos = []
+        details = gmaps.place(
+            place_id=place_id,
+            fields=["photo", "editorial_summary", "price_level", "opening_hours"]
+        )
 
-        if "result" in details and "photos" in details["result"]:
-            for photo in details["result"]["photos"][:5]:
+        result = details.get("result", {})
+        photos = []
+        if "photos" in result:
+            for photo in result["photos"][:5]:
                 ref = photo.get("photo_reference")
                 if ref:
                     photo_url = (
@@ -127,7 +131,39 @@ def place_details():
                     )
                     photos.append(photo_url)
 
-        return jsonify({"status": "ok", "photos": photos})
+        # Build about info
+        about_info = []
+        if "editorial_summary" in result:
+            about_info.append(result["editorial_summary"].get("overview", ""))
+
+        if "price_level" in result:
+            levels = ["Free", "Inexpensive", "Moderate", "Expensive", "Very Expensive"]
+            price_text = levels[result["price_level"]] if result["price_level"] < len(levels) else "N/A"
+            about_info.append(f"💲 Price: {price_text}")
+
+        if "opening_hours" in result:
+            hours = result["opening_hours"].get("weekday_text", [])
+            if hours:
+                # Case 1: all days 24h
+                if all("Open 24 hours" in h for h in hours):
+                    about_info.append("🕒 Open 24/7")
+
+                # Case 2: all days same hours (not 24h)
+                elif len(set(h.split(": ", 1)[1] for h in hours)) == 1:
+                    uniform = hours[0].split(": ", 1)[1]
+                    about_info.append(f"🕒 Daily: {uniform}")
+
+                # Case 3: fallback → include shortened list
+                else:
+                    compact = "; ".join(h.replace("day: ", "") for h in hours)
+                    about_info.append(f"🕒 {compact}")
+
+
+        if "types" in result:
+            types = [t.replace("_", " ").title() for t in result["types"]]
+            about_info.append(f"📌 Types: {', '.join(types)}")
+
+        return jsonify({"status": "ok", "photos": photos, "about": about_info})
 
     except Exception as e:
         print("❌ Place details error:", e)
