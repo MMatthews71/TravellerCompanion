@@ -8,7 +8,6 @@ let allSupermarketResults = [];
 let allHostelResults = [];
 let allHealthcareResults = [];
 
-
 // DOM elements
 const statusElement = document.getElementById('status-message');
 const resultsBody = document.getElementById('results-body');
@@ -32,13 +31,6 @@ function initializeEventListeners() {
 
   sortButtons.forEach(button => {
     button.addEventListener('click', () => handleSortClick(button));
-  });
-
-  // Initialize filter buttons
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      // Active state is handled by the main click handler
-    });
   });
 
   // Click to dismiss status messages
@@ -115,96 +107,113 @@ async function updateLocationDisplay(lat, lng) {
 }
 
 async function handleServiceClick(button) {
-    const service = button.dataset.service;
-    currentService = service;
-  
-    // Update button states
-    serviceButtons.forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-  
-    // Show controls
-    controlsBar.classList.remove('hidden');
-  
-    // Hide all filters
-    document.querySelectorAll('[class*="-filter-container"]').forEach(container => {
-      container.classList.add('hidden');
-    });
-  
-    // Show/hide price column and sort button
-    const costSortBtn = document.getElementById('sort-cost');
-    if (service === 'food') {
-      costSortBtn.classList.remove('hidden');
-      priceHeader.style.display = 'table-cell';
-    } else {
-      costSortBtn.classList.add('hidden');
-      priceHeader.style.display = 'none';
-      if (costSortBtn.classList.contains('active')) {
-        document.getElementById('sort-distance').click();
-      }
-    }
-  
-    showStatus(`Searching for nearby ${getServiceDisplayName(service)}...`, 'info');
-  
-    try {
-      if (!currentLocation) {
-        throw new Error('Location not available. Please allow location access.');
-      }
-  
-      let results = [];
-  
-      if (service === 'food') {
-        results = await searchMultipleCategories(['restaurant', 'fast food', 'cafe']);
-        allFoodResults = results;
-        document.querySelector('.food-filter-container').classList.remove('hidden');
-  
-      } else if (service === 'supermarket') {
-        results = await searchMultipleCategories(['supermarket', 'convenience store', 'local market', 'general store']);
-        allSupermarketResults = results;
-        document.querySelector('.supermarket-filter-container').classList.remove('hidden');
-  
-      } else if (service === 'hostel') {
-        results = await searchMultipleCategories(['hostel', 'hotel', 'lodging']);
-        allHostelResults = results;
-        document.querySelector('.hostel-filter-container').classList.remove('hidden');
-  
-      } else if (service === 'pharmacy') {
-        results = await searchMultipleCategories(['pharmacy', 'hospital']);
-        allHealthcareResults = results;
-        document.querySelector('.healthcare-filter-container').classList.remove('hidden');
-  
-      } else {
-        results = await searchPlaces(service);
-      }
-  
-      currentResults = results;
-      displayResults(results);
-  
-      if (results.length === 0) {
-        showStatus(`No ${getServiceDisplayName(service)} found nearby.`, 'info');
-      } else {
-        showStatus(`Found ${results.length} ${getServiceDisplayName(service, results.length)}.`, 'info');
-      }
-  
-    } catch (error) {
-      showStatus('Search failed. Please try again.', 'error');
-      console.error('Search error:', error);
+  const service = button.dataset.service;
+  currentService = service;
+
+  // Update button states
+  serviceButtons.forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+
+  // Show controls
+  controlsBar.classList.remove('hidden');
+
+  // Hide all filters
+  document.querySelectorAll('[class*="-filter-container"]').forEach(container => {
+    container.classList.add('hidden');
+  });
+
+  // Show/hide price column and sort button
+  const costSortBtn = document.getElementById('sort-cost');
+  if (service === 'food') {
+    costSortBtn.classList.remove('hidden');
+    priceHeader.style.display = 'table-cell';
+  } else {
+    costSortBtn.classList.add('hidden');
+    priceHeader.style.display = 'none';
+    if (costSortBtn.classList.contains('active')) {
+      document.getElementById('sort-distance').click();
     }
   }
-  
+
+  showStatus(`Searching for nearby ${getServiceDisplayName(service)}...`, 'info');
+
+  try {
+    if (!currentLocation) {
+      throw new Error('Location not available. Please allow location access.');
+    }
+
+    let results = [];
+
+    if (service === 'food') {
+      results = await searchMultipleCategories(['restaurant', 'cafe', 'bakery', 'food']);
+      allFoodResults = results;
+      document.querySelector('.food-filter-container').classList.remove('hidden');
+
+    } else if (service === 'supermarket') {
+      results = await searchMultipleCategories(['supermarket', 'convenience_store', 'grocery_or_supermarket']);
+      allSupermarketResults = results;
+      document.querySelector('.supermarket-filter-container').classList.remove('hidden');
+
+    } else if (service === 'hostel') {
+      results = await searchMultipleCategories(['lodging', 'hostel', 'hotel']);
+      
+      // Process hostel results to ensure places with "hostel" or "hotel" in name have correct type
+      results = results.map(place => {
+        const name = place.name ? place.name.toLowerCase() : '';
+        
+        if (name.includes('hostel') && place.types) {
+          // Create a new types array with "hostel" as the first element
+          const newTypes = ['hostel', ...place.types.filter(type => type !== 'hostel')];
+          return {
+            ...place,
+            types: newTypes,
+            category: 'hostel' // Set category to hostel
+          };
+        } else if (name.includes('hotel') && place.types) {
+          // Create a new types array with "hotel" as the first element
+          const newTypes = ['hotel', ...place.types.filter(type => type !== 'hotel')];
+          return {
+            ...place,
+            types: newTypes,
+            category: 'hotel' // Set category to hotel
+          };
+        }
+        return place;
+      });
+      
+      allHostelResults = results;
+      document.querySelector('.hostel-filter-container').classList.remove('hidden');
+
+    } else if (service === 'pharmacy') {
+      results = await searchMultipleCategories(['pharmacy', 'hospital', 'health']);
+      allHealthcareResults = results;
+      document.querySelector('.healthcare-filter-container').classList.remove('hidden');
+
+    } else {
+      results = await searchPlaces(service);
+    }
+
+    currentResults = results;
+    displayResults(results);
+
+    if (results.length === 0) {
+      showStatus(`No ${getServiceDisplayName(service)} found nearby.`, 'info');
+    } else {
+      showStatus(`Found ${results.length} ${getServiceDisplayName(service, results.length)}.`, 'info');
+    }
+
+  } catch (error) {
+    showStatus('Search failed. Please try again.', 'error');
+    console.error('Search error:', error);
+  }
+}
 
 async function searchMultipleCategories(categories) {
   const searches = categories.map(category => searchPlaces(category, category));
   const resultsArrays = await Promise.all(searches);
   
-  // Assign category to each result and flatten the array
-  const merged = [];
-  resultsArrays.forEach((results, index) => {
-    const category = categories[index];
-    results.forEach(place => {
-      place.category = category; // Ensure each place has the correct category
-      merged.push(place);
-    });
-  });
+  // Flatten the array
+  const merged = [].concat.apply([], resultsArrays);
 
   // Deduplicate
   const seen = new Set();
@@ -236,10 +245,10 @@ async function searchPlaces(keyword, category = null) {
     }
 
     return data.results.map(place => {
-      // Ensure the place has a category, either from the parameter or from the place data
-      const placeCategory = category || place.types?.find(type => 
-        ['supermarket', 'convenience_store', 'grocery_or_supermarket', 'food', 'restaurant', 'cafe', 'lodging', 'hostel', 'hotel'].includes(type)
-      ) || 'other';
+      // Use the first type from the place's types array as the category
+      const primaryCategory = place.types && place.types.length > 0 
+        ? place.types[0] 
+        : (category || 'other');
       
       return {
         ...place,
@@ -249,7 +258,7 @@ async function searchPlaces(keyword, category = null) {
           place.location.lat,
           place.location.lng
         ),
-        category: placeCategory,
+        category: primaryCategory,
         walkTime: Math.round((calculateDistance(
           currentLocation.lat,
           currentLocation.lng,
@@ -321,7 +330,7 @@ function displayResults(results) {
     nameContent.appendChild(nameSpan);
     nameCell.appendChild(nameContent);
 
-    // Category
+    // Category (show only the first type)
     const categoryCell = document.createElement('td');
     categoryCell.textContent = formatCategoryName(place.category || 'general');
 
@@ -331,7 +340,6 @@ function displayResults(results) {
     if (currentService === 'food') {
       if (place.price_level !== undefined && place.price_level !== null) {
         priceCell.textContent = '$'.repeat(Math.min(place.price_level + 1, 4));
-
       } else {
         priceCell.textContent = '?';
         priceCell.style.opacity = '0.6';
@@ -441,9 +449,8 @@ document.addEventListener('click', (e) => {
     } else if (filterType === 'hostel') {
       filterHostelResults(filterValue);
     } else if (filterType === 'healthcare') {
-        filterHealthcareResults(filterValue);
-      }
-      
+      filterHealthcareResults(filterValue);
+    }
   }
 });
 
@@ -451,7 +458,10 @@ function filterFoodResults(filterType) {
   if (currentService !== 'food' || allFoodResults.length === 0) return;
   const filtered = filterType === 'all' 
     ? allFoodResults 
-    : allFoodResults.filter(p => p.category === filterType);
+    : allFoodResults.filter(p => {
+        // Check if the place's types array contains the filter type
+        return p.types && p.types.includes(filterType);
+      });
   currentResults = filtered;
   displayResults(filtered);
 }
@@ -462,13 +472,8 @@ function filterSupermarketResults(filterType) {
   const filtered = filterType === 'all' 
     ? allSupermarketResults 
     : allSupermarketResults.filter(p => {
-        // Only use the category assigned by the backend
-        // This is the single source of truth for filtering
-        const normalizedCategory = (p.category || '').toLowerCase().trim();
-        const normalizedFilter = filterType.toLowerCase().trim();
-        
-        // Only return true for exact matches
-        return normalizedCategory === normalizedFilter;
+        // Check if the place's types array contains the filter type
+        return p.types && p.types.includes(filterType);
       });
       
   currentResults = filtered;
@@ -479,7 +484,22 @@ function filterHostelResults(filterType) {
   if (currentService !== 'hostel' || allHostelResults.length === 0) return;
   const filtered = filterType === 'all' 
     ? allHostelResults 
-    : allHostelResults.filter(p => p.category === filterType);
+    : allHostelResults.filter(p => {
+        // Check if the place's types array contains the filter type
+        return p.types && p.types.includes(filterType);
+      });
+  currentResults = filtered;
+  displayResults(filtered);
+}
+
+function filterHealthcareResults(filterType) {
+  if (currentService !== 'pharmacy' || allHealthcareResults.length === 0) return;
+  const filtered = filterType === 'all' 
+    ? allHealthcareResults 
+    : allHealthcareResults.filter(p => {
+        // Check if the place's types array contains the filter type
+        return p.types && p.types.includes(filterType);
+      });
   currentResults = filtered;
   displayResults(filtered);
 }
@@ -584,22 +604,24 @@ async function toggleDetailsRow(place, row) {
 function formatCategoryName(category) {
   const categoryMap = {
     'restaurant': 'Restaurant',
-    'fast food': 'Fast Food', 
     'cafe': 'Café',
+    'bakery': 'Bakery',
+    'food': 'Food',
     'supermarket': 'Supermarket',
-    'convenience store': 'Convenience',
-    'local market': 'Local Market',
-    'general store': 'General Store',
+    'convenience_store': 'Convenience Store',
+    'grocery_or_supermarket': 'Grocery',
+    'lodging': 'Lodging',
     'hostel': 'Hostel',
     'hotel': 'Hotel',
-    'lodging': 'Lodging',
-    'laundry': 'Laundry',
     'pharmacy': 'Pharmacy',
+    'hospital': 'Hospital',
+    'health': 'Health',
+    'laundry': 'Laundry',
     'atm': 'ATM',
-    'hospital': 'Hospital'
+    'bank': 'Bank'
   };
   
-  return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
+  return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
 }
 
 function getServiceDisplayName(service, count = 1) {
@@ -610,7 +632,6 @@ function getServiceDisplayName(service, count = 1) {
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
     'hostel': { singular: 'accommodation', plural: 'accommodations' }
-
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };
@@ -627,12 +648,3 @@ function showStatus(message, type = 'info') {
     }, 4000);
   }
 }
-function filterHealthcareResults(filterType) {
-    if (currentService !== 'pharmacy' || allHealthcareResults.length === 0) return;
-    const filtered = filterType === 'all' 
-      ? allHealthcareResults 
-      : allHealthcareResults.filter(p => p.category === filterType);
-    currentResults = filtered;
-    displayResults(filtered);
-  }
-  

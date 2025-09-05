@@ -37,8 +37,31 @@ if not GOOGLE_MAPS_API_KEY:
 
 gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
-def create_place_data(place, category):
+def create_place_data(place, search_category):
     """Helper function to create a standardized place data dictionary."""
+    place_types = place.get("types", [])
+    
+    # Determine the primary category based on the place's types
+    # Use the search category as fallback if no relevant types found
+    primary_category = search_category
+    if place_types:
+        # Prioritize certain types for better categorization
+        type_priority = [
+            "hospital", "pharmacy", "doctor", "health", 
+            "supermarket", "convenience_store", "grocery",
+            "hostel", "hotel", "lodging",
+            "restaurant", "cafe", "bakery", "food",
+            "bank", "atm", "finance"
+        ]
+        
+        for priority_type in type_priority:
+            if priority_type in place_types:
+                primary_category = priority_type
+                break
+        else:
+            # If no priority type found, use the first type
+            primary_category = place_types[0]
+
     return {
         "name": place.get("name", "N/A"),
         "address": place.get("vicinity", "N/A"),
@@ -47,12 +70,13 @@ def create_place_data(place, category):
         "open_now": place.get("opening_hours", {}).get("open_now"),
         "place_id": place.get("place_id"),
         "location": place.get("geometry", {}).get("location", {}),
-        "category": category,
+        "category": primary_category,
         "icon": place.get("icon"),
         "icon_base": place.get("icon_mask_base_uri"),
         "icon_bg": place.get("icon_background_color"),
         "price_level": place.get("price_level"),
-        "types": place.get("types", [])
+        "types": place_types,
+        "all_types": place_types  # Store all types for potential filtering
     }
 
 # Default fallback (Lima, Peru)
@@ -181,9 +205,7 @@ def search():
                 all_places = places_result.get("results", [])
 
             for place in all_places:
-                place_types = place.get("types", [])
-                category = "cafe" if "bakery" in place_types and keyword.lower() == "food" else keyword.lower()
-                results.append(create_place_data(place, category))
+                results.append(create_place_data(place, keyword.lower()))
 
         # Deduplicate across all branches
         seen = set()
