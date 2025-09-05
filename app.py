@@ -132,7 +132,6 @@ def search():
             search_categories = [
                 ("local market", "local_market"),
                 ("convenience store", "convenience_store"),
-                ("general store", "general_store"),
                 ("supermarket", "supermarket")
             ]
             

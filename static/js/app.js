@@ -546,7 +546,6 @@ function formatCategoryName(category) {
     'fast_food': 'Fast Food',
     'local_market': 'Local Market',
     'convenience_store': 'Convenience Store',
-    'general_store': 'General Store',
     'supermarket': 'Supermarket',
     'lodging': 'Lodging',
     'bed_and_breakfast': 'B&B',
