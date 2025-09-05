@@ -7,6 +7,7 @@ let allFoodResults = [];
 let allSupermarketResults = [];
 let allHostelResults = [];
 let allHealthcareResults = [];
+let allSimResults = []; // NEW: Added SIM card results storage
 
 // DOM elements
 const statusElement = document.getElementById('status-message');
@@ -105,7 +106,17 @@ async function updateLocationDisplay(lat, lng) {
     locationText.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   }
 }
-
+function filterSimResults(filterType) {
+  if (currentService !== 'sim' || allSimResults.length === 0) return;
+  const filtered = filterType === 'all' 
+    ? allSimResults 
+    : allSimResults.filter(p => {
+        // Check if the place's types array contains the filter type
+        return p.types && p.types.includes(filterType);
+      });
+  currentResults = filtered;
+  displayResults(filtered);
+}
 async function handleServiceClick(button) {
   const service = button.dataset.service;
   currentService = service;
@@ -198,6 +209,16 @@ async function handleServiceClick(button) {
       results = results.filter(place => place.category !== 'health');
       allHealthcareResults = results;
       document.querySelector('.healthcare-filter-container').classList.remove('hidden');
+
+    } else if (service === 'sim') { // NEW: SIM card service
+      results = await searchMultipleCategories([
+        'mobile_phone_shop', 
+        'telecommunications', 
+        'electronics_store',
+        'convenience_store'
+      ]);
+      allSimResults = results;
+      document.querySelector('.sim-filter-container').classList.remove('hidden');
 
     } else {
       results = await searchPlaces(service);
@@ -437,8 +458,6 @@ function handleSortClick(button) {
     displayResults(currentResults);
   }
 }
-
-// Handle filter button clicks
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('filter-btn')) {
     const filterType = e.target.dataset.type;
@@ -460,9 +479,12 @@ document.addEventListener('click', (e) => {
       filterHostelResults(filterValue);
     } else if (filterType === 'healthcare') {
       filterHealthcareResults(filterValue);
+    } else if (filterType === 'sim') { // NEW: SIM card filter
+      filterSimResults(filterValue);
     }
   }
 });
+
 
 function filterFoodResults(filterType) {
   if (currentService !== 'food' || allFoodResults.length === 0) return;
@@ -640,7 +662,12 @@ function formatCategoryName(category) {
     'health': 'Health',
     'laundry': 'Laundry',
     'atm': 'ATM',
-    'bank': 'Bank'
+    'bank': 'Bank',
+    // NEW: SIM card related categories
+    'mobile_phone_shop': 'Mobile Shop',
+    'telecommunications': 'Telecom Store',
+    'electronics_store': 'Electronics Store',
+    'convenience_store': 'Convenience Store'
   };
   
   return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
@@ -653,7 +680,8 @@ function getServiceDisplayName(service, count = 1) {
     'supermarket': { singular: 'shopping location', plural: 'shopping locations' },
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
-    'hostel': { singular: 'accommodation', plural: 'accommodations' }
+    'hostel': { singular: 'accommodation', plural: 'accommodations' },
+    'sim': { singular: 'SIM card provider', plural: 'SIM card providers' } // NEW: SIM card service name
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };

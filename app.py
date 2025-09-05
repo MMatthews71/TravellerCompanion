@@ -249,6 +249,23 @@ def search():
                     results.append(create_place_data(place, "cafe"))  # Categorize as cafe
                     seen_place_ids.add(pid)
 
+        elif keyword.lower() == "sim":  # NEW: SIM card search
+            # SIM card sellers: mobile shops, telecom stores, electronics stores, convenience stores
+            categories = ["mobile_phone_shop", "telecommunications", "electronics_store", "convenience_store"]
+            seen_place_ids = set()
+            for cat in categories:
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=2000,
+                    keyword="sim card",
+                    type=cat
+                )
+                for place in places_result.get("results", []):
+                    pid = place.get("place_id")
+                    if pid and pid not in seen_place_ids:
+                        results.append(create_place_data(place, cat))
+                        seen_place_ids.add(pid)
+
         else:
             # General search (atm, laundry, etc.)
             radius = 2000 if keyword.lower() in ["supermarket", "food", "restaurant"] else 1000
