@@ -145,7 +145,7 @@ async function handleServiceClick(button) {
     let results = [];
 
     if (service === 'food') {
-      results = await searchMultipleCategories(['restaurant', 'cafe', 'bakery', 'food']);
+      results = await searchMultipleCategories(['restaurant', 'cafe', 'fast_food', 'food']);
       allFoodResults = results;
       document.querySelector('.food-filter-container').classList.remove('hidden');
 
@@ -469,8 +469,14 @@ function filterFoodResults(filterType) {
   const filtered = filterType === 'all' 
     ? allFoodResults 
     : allFoodResults.filter(p => {
-        // Check if the place's types array contains the filter type
-        return p.types && p.types.includes(filterType);
+        // Special handling for fast_food category
+        if (filterType === 'fast_food') {
+          return p.category === 'fast_food' || 
+                 p.category === 'meal_takeaway' ||
+                 (p.types && (p.types.includes('fast_food') || p.types.includes('meal_takeaway')));
+        }
+        // Check if the place's category matches or if types array contains the filter type
+        return p.category === filterType || (p.types && p.types.includes(filterType));
       });
   currentResults = filtered;
   displayResults(filtered);
@@ -619,8 +625,10 @@ function formatCategoryName(category) {
   const categoryMap = {
     'restaurant': 'Restaurant',
     'cafe': 'Café',
-    'bakery': 'Bakery',
+    'bakery': 'Café', // Bakeries are now shown as Cafés
     'food': 'Food',
+    'fast_food': 'Fast Food',
+    'meal_takeaway': 'Fast Food',
     'supermarket': 'Supermarket',
     'convenience_store': 'Convenience Store',
     'grocery_or_supermarket': 'Grocery',

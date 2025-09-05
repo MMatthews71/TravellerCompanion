@@ -50,7 +50,8 @@ def create_place_data(place, search_category):
             "hospital", "pharmacy", "doctor", "health", 
             "supermarket", "convenience_store", "grocery",
             "hostel", "hotel", "lodging",
-            "restaurant", "cafe", "bakery", "food",
+            "restaurant", "meal_takeaway", "fast_food",
+            "cafe", "bakery",
             "bank", "atm", "finance"
         ]
         
@@ -61,6 +62,10 @@ def create_place_data(place, search_category):
         else:
             # If no priority type found, use the first type
             primary_category = place_types[0]
+
+    # Special handling for cafés and bakeries - combine them into café category
+    if primary_category == "bakery":
+        primary_category = "cafe"
 
     return {
         "name": place.get("name", "N/A"),
@@ -178,31 +183,82 @@ def search():
                         results.append(create_place_data(place, cat))
                         seen_place_ids.add(pid)
 
+        elif keyword.lower() == "food":
+            # Enhanced food search with multiple categories
+            seen_place_ids = set()
+            
+            # Restaurants
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="restaurant"
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "restaurant"))
+                    seen_place_ids.add(pid)
+
+            # Fast food
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                type="meal_takeaway"
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "fast_food"))
+                    seen_place_ids.add(pid)
+
+            # Search for fast food specifically
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="fast food"
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "fast_food"))
+                    seen_place_ids.add(pid)
+
+            # Cafés (includes bakeries)
+            cafe_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="cafe",
+                type="cafe"
+            )
+            for place in cafe_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "cafe"))
+                    seen_place_ids.add(pid)
+
+            # Bakeries (will be categorized as cafés)
+            bakery_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="bakery",
+                type="bakery"
+            )
+            for place in bakery_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "cafe"))  # Categorize as cafe
+                    seen_place_ids.add(pid)
+
         else:
-            # General search (food, atm, etc.)
+            # General search (atm, laundry, etc.)
             radius = 2000 if keyword.lower() in ["supermarket", "food", "restaurant"] else 1000
 
-            if keyword.lower() == "food":
-                # Include bakeries as cafes
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="restaurant"
-                )
-                bakery_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="bakery",
-                    type="bakery"
-                )
-                all_places = places_result.get("results", []) + bakery_result.get("results", [])
-            else:
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword=keyword,
-                )
-                all_places = places_result.get("results", [])
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=radius,
+                keyword=keyword,
+            )
+            all_places = places_result.get("results", [])
 
             for place in all_places:
                 results.append(create_place_data(place, keyword.lower()))
