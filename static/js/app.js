@@ -539,8 +539,7 @@ function formatCategoryName(category) {
     'lodging': 'Lodging',
     'laundry': 'Laundry',
     'pharmacy': 'Pharmacy',
-    'atm': 'ATM',
-    'bus_station': 'Transport'
+    'atm': 'ATM'
   };
   
   return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
@@ -548,13 +547,13 @@ function formatCategoryName(category) {
 
 function getServiceDisplayName(service, count = 1) {
   const serviceNames = {
+    'laundry': { singular: 'laundry service', plural: 'laundries' },
     'laundry': { singular: 'laundry service', plural: 'laundry services' },
     'pharmacy': { singular: 'pharmacy', plural: 'pharmacies' },
     'supermarket': { singular: 'supermarket', plural: 'supermarkets' },
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
-    'hostel': { singular: 'hostel', plural: 'hostels' },
-    'bus_station': { singular: 'transport hub', plural: 'transport hubs' }
+    'hostel': { singular: 'hostel', plural: 'hostels' }
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };

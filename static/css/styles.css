@@ -70,6 +70,8 @@
     pointer-events: none;
   }
   
+  
+  /* Ensure proper vertical stacking in hero section */
   .hero-content {
     position: relative;
     z-index: 2;
@@ -77,8 +79,12 @@
     margin: 0 auto;
     padding: 0 2rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  
+
+  /* Badge should be above title */
   .hero-badge {
     display: inline-flex;
     align-items: center;
@@ -92,27 +98,40 @@
     font-weight: 500;
     margin-bottom: 1.5rem;
     backdrop-filter: blur(10px);
+    order: 1; /* Ensure it comes first */
   }
-  
+
+  /* Title comes after badge */
   .hero-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
     font-size: clamp(2.5rem, 5vw, 4rem);
     font-weight: 700;
     color: var(--text-light);
     margin-bottom: 1rem;
     letter-spacing: -0.02em;
     line-height: 1.1;
+    order: 2; /* Comes after badge */
+    
+    /* Clean gradient for adventure feel */
+    background: linear-gradient(135deg, #ffffff 0%, var(--accent-teal) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* Subtle depth */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
+  /* Subtitle comes after title */
   .hero-subtitle {
     font-size: 1.25rem;
     color: var(--text-muted);
     margin-bottom: 2rem;
     max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    order: 3; /* Comes after title */
   }
-  
+
+  /* Location display comes last */
   .location-display {
     display: inline-flex;
     align-items: center;
@@ -125,8 +144,21 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     margin-bottom: 2rem;
+    order: 4; /* Comes last */
   }
-  
+
+  /* Simple fallback for accessibility */
+  @media (prefers-contrast: high) {
+    .hero-title {
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      -webkit-text-fill-color: unset;
+      color: #ffffff;
+    }
+  }
+    
+    
   .location-icon {
     width: 16px;
     height: 16px;
