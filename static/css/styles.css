@@ -350,7 +350,7 @@
     border-radius: 2px;
   }
   
-  .filter-btn {
+  .filter-btn, .sort-btn {
     background: none;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -362,13 +362,13 @@
     white-space: nowrap;
   }
   
-  .filter-btn:hover {
+  .filter-btn:hover, .sort-btn:hover {
     background: var(--accent-teal);
     color: white;
     border-color: var(--accent-teal);
   }
   
-  .filter-btn.active {
+  .filter-btn.active, .sort-btn.active {
     background: var(--accent-teal);
     color: white;
     border-color: var(--accent-teal);
@@ -386,30 +386,6 @@
     font-weight: 500;
     color: var(--text-primary);
     font-size: 0.875rem;
-  }
-  
-  .sort-btn {
-    padding: 0.5rem 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: var(--transition);
-    white-space: nowrap;
-  }
-  
-  .sort-btn:hover {
-    background: var(--accent-teal);
-    color: white;
-    border-color: var(--accent-teal);
-  }
-  
-  .sort-btn.active {
-    background: var(--accent-teal);
-    color: white;
-    border-color: var(--accent-teal);
-    box-shadow: var(--shadow-sm);
   }
   
   .filter-select {
