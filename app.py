@@ -157,28 +157,42 @@ def search():
                         results.append(place_data)
                         seen_place_ids.add(place_id)
                 
-                # 4. Search for bakeries
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="bakery",
-                    type="bakery"
-                )
-                for place in places_result.get("results", []):
-                    place_id = place.get("place_id")
-                    if place_id and place_id not in seen_place_ids:
-                        place_data = create_place_data(place, "bakery")
-                        results.append(place_data)
-                        seen_place_ids.add(place_id)
+                # 4. Search for bakeries (but classify them as cafes in the food category)
+                # This is a no-op here since we'll handle bakeries in the food search instead
             else:
                 # Handle other search types (food, etc.)
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword=keyword,
-                )
+                if keyword.lower() == "food":
+                    # For food searches, include bakeries but classify them as cafes
+                    places_result = gmaps.places_nearby(
+                        location=(lat, lng),
+                        radius=radius,
+                        keyword=keyword,
+                    )
+                    
+                    # Also search specifically for bakeries
+                    bakery_result = gmaps.places_nearby(
+                        location=(lat, lng),
+                        radius=radius,
+                        keyword="bakery",
+                        type="bakery"
+                    )
+                    
+                    # Combine results
+                    all_places = places_result.get("results", []) + bakery_result.get("results", [])
+                else:
+                    # For other searches, just use the normal search
+                    places_result = gmaps.places_nearby(
+                        location=(lat, lng),
+                        radius=radius,
+                        keyword=keyword,
+                    )
+                    all_places = places_result.get("results", [])
                 
-                for place in places_result.get("results", []):
+                for place in all_places:
+                    # Classify bakeries as cafes in the food category
+                    place_types = place.get("types", [])
+                    category = "cafe" if "bakery" in place_types else keyword
+                    
                     place_data = {
                         "name": place.get("name", "N/A"),
                         "address": place.get("vicinity", "N/A"),
@@ -187,12 +201,12 @@ def search():
                         "open_now": place.get("opening_hours", {}).get("open_now"),
                         "place_id": place.get("place_id"),
                         "location": place.get("geometry", {}).get("location", {}),
-                        "category": keyword,
+                        "category": category,
                         "icon": place.get("icon"),
                         "icon_base": place.get("icon_mask_base_uri"),
                         "icon_bg": place.get("icon_background_color"),
                         "price_level": place.get("price_level"),
-                        "types": place.get("types", [])
+                        "types": place_types
                     }
                     results.append(place_data)
 
