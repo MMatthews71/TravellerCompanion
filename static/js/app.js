@@ -308,7 +308,7 @@ function displayResults(results) {
     priceCell.className = 'price-display';
     if (currentService === 'food') {
       if (place.price_level !== undefined && place.price_level !== null) {
-        priceCell.textContent = '.repeat(Math.min(place.price_level + 1, 4))';
+        priceCell.textContent = '$'.repeat(Math.min(place.price_level + 1, 4));
 
       } else {
         priceCell.textContent = '?';
