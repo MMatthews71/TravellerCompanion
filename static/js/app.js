@@ -193,7 +193,9 @@ async function handleServiceClick(button) {
       document.querySelector('.hostel-filter-container').classList.remove('hidden');
 
     } else if (service === 'pharmacy') {
-      results = await searchMultipleCategories(['pharmacy', 'hospital', 'health']);
+      results = await searchMultipleCategories(['pharmacy', 'hospital']);
+      // Filter out any results with 'health' category
+      results = results.filter(place => place.category !== 'health');
       allHealthcareResults = results;
       document.querySelector('.healthcare-filter-container').classList.remove('hidden');
 
@@ -507,10 +509,10 @@ function filterHostelResults(filterType) {
 function filterHealthcareResults(filterType) {
   if (currentService !== 'pharmacy' || allHealthcareResults.length === 0) return;
   const filtered = filterType === 'all' 
-    ? allHealthcareResults 
+    ? allHealthcareResults.filter(p => p.category !== 'health')
     : allHealthcareResults.filter(p => {
-        // Check if the place's types array contains the filter type
-        return p.types && p.types.includes(filterType);
+        // Check if the place's types array contains the filter type and it's not a 'health' category
+        return p.types && p.types.includes(filterType) && p.category !== 'health';
       });
   currentResults = filtered;
   displayResults(filtered);
