@@ -202,14 +202,16 @@ def search():
                             seen_place_ids.add(pid)
 
         elif keyword.lower() == "sim":
-            # SIM card search - just search for "sim card"
+            # SIM card search - use first type from API response as category
             places_result = gmaps.places_nearby(
                 location=(lat, lng),
                 radius=2000,
                 keyword="sim card"
             )
             for place in places_result.get("results", []):
-                results.append(create_place_data(place, "sim_card"))
+                # Use the first type from the place's types list, or 'sim_card' as fallback
+                category = place.get('types', ['sim_card'])[0] if place.get('types') else 'sim_card'
+                results.append(create_place_data(place, category))
 
         else:
             # General search (laundry, atm, etc.) - classify by search term
