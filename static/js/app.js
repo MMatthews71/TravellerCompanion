@@ -589,13 +589,12 @@ function formatCategoryName(category) {
 
 function getServiceDisplayName(service, count = 1) {
   const serviceNames = {
-    'laundry': { singular: 'laundry service', plural: 'laundries' },
     'laundry': { singular: 'laundry service', plural: 'laundry services' },
-    'pharmacy': { singular: 'pharmacy', plural: 'pharmacies' },
-    'supermarket': { singular: 'supermarket', plural: 'supermarkets' },
+    'pharmacy': { singular: 'healthcare location', plural: 'healthcare locations' },
+    'supermarket': { singular: 'shopping location', plural: 'shopping locations' },
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
-    'hostel': { singular: 'hostel', plural: 'hostels' }
+    'hostel': { singular: 'accommodation', plural: 'accommodations' }
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };
