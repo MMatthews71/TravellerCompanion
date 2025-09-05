@@ -21,7 +21,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching in dev
 
 @app.after_request
 def add_no_cache_headers(response):
-    """Ensure templates and static files don’t get cached in dev"""
+    """Ensure templates and static files don't get cached in dev"""
     if app.debug:
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
@@ -32,6 +32,9 @@ def add_no_cache_headers(response):
 # Google Maps setup
 # -----------------------------
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+if not GOOGLE_MAPS_API_KEY:
+    raise ValueError("GOOGLE_MAPS_API_KEY environment variable is required")
+
 gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
 # Default fallback (Lima, Peru)
@@ -49,22 +52,25 @@ def index():
 def search():
     """
     Search nearby places with Google Maps Places API.
-    Supports special handling for 'hostel' so we can include hotels/lodging.
+    Enhanced with better error handling and data processing.
     """
     try:
         lat = float(request.args.get("lat", DEFAULT_LOCATION["lat"]))
         lng = float(request.args.get("lng", DEFAULT_LOCATION["lng"]))
         keyword = request.args.get("keyword", "")
 
+        if not keyword:
+            return jsonify({"status": "error", "message": "Keyword is required"}), 400
+
         results = []
 
         if keyword.lower() == "hostel":
-            # ✅ For hostel searches, also include hotels/lodging
+            # For hostel searches, also include hotels/lodging
             categories = ["hostel", "hotel", "lodging"]
             for cat in categories:
                 places_result = gmaps.places_nearby(
                     location=(lat, lng),
-                    radius=1500,   # slightly bigger search radius
+                    radius=1500,   # slightly bigger search radius for accommodations
                     keyword=cat,
                 )
                 for place in places_result.get("results", []):
@@ -73,23 +79,26 @@ def search():
                         "address": place.get("vicinity", "N/A"),
                         "rating": place.get("rating", "N/A"),
                         "total_ratings": place.get("user_ratings_total", 0),
-                        "open_now": place.get("opening_hours", {}).get("open_now", False),
+                        "open_now": place.get("opening_hours", {}).get("open_now"),
                         "place_id": place.get("place_id"),
                         "location": place.get("geometry", {}).get("location", {}),
-                        "category": cat,  # store category for filtering
-                        "icon": place.get("icon"),  # add icon
+                        "category": cat,
+                        "icon": place.get("icon"),
                         "icon_base": place.get("icon_mask_base_uri"),
                         "icon_bg": place.get("icon_background_color"),
-                        "price_level": place.get("price_level"),  # Add price level
-                        "types": place.get("types", []),  # Add types for filtering
+                        "price_level": place.get("price_level"),
+                        "types": place.get("types", [])
                     })
         else:
-            # Normal case — just one keyword
+            # Standard search for other services
+            radius = 2000 if keyword in ["supermarket", "food", "restaurant"] else 1000
+            
             places_result = gmaps.places_nearby(
                 location=(lat, lng),
-                radius=1000,
+                radius=radius,
                 keyword=keyword,
             )
+            
             for place in places_result.get("results", []):
                 place_data = {
                     "name": place.get("name", "N/A"),
@@ -108,11 +117,23 @@ def search():
                 }
                 results.append(place_data)
 
-        return jsonify({"status": "success", "results": results})
+        # Remove duplicates based on place_id or name+address
+        seen = set()
+        unique_results = []
+        for result in results:
+            identifier = result.get("place_id") or f"{result['name']}|{result['address']}"
+            if identifier not in seen:
+                seen.add(identifier)
+                unique_results.append(result)
 
+        return jsonify({"status": "success", "results": unique_results})
+
+    except ValueError as e:
+        print(f"❌ Search parameter error: {e}")
+        return jsonify({"status": "error", "message": "Invalid coordinates provided"}), 400
     except Exception as e:
-        print("❌ Search error:", e)
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"❌ Search error: {e}")
+        return jsonify({"status": "error", "message": "Search service temporarily unavailable"}), 500
 
 # -----------------------------
 # Place details (photos + about info)
@@ -132,149 +153,214 @@ def place_details():
                 "editorial_summary",
                 "price_level",
                 "opening_hours",
-                "website",  # ✅ include website
+                "website",
+                "formatted_phone_number",
+                "rating",
+                "user_ratings_total"
             ]
         )
 
         result = details.get("result", {})
         photos = []
+        
+        # Process photos
         if "photos" in result:
-            for photo in result["photos"][:5]:
+            for photo in result["photos"][:6]:  # Limit to 6 photos
                 ref = photo.get("photo_reference")
                 if ref:
                     photo_url = (
                         f"https://maps.googleapis.com/maps/api/place/photo"
-                        f"?maxwidth=400&photoreference={ref}&key={GOOGLE_MAPS_API_KEY}"
+                        f"?maxwidth=600&photoreference={ref}&key={GOOGLE_MAPS_API_KEY}"
                     )
                     photos.append(photo_url)
 
         # Build about info
         about_info = []
+        
         if "editorial_summary" in result:
-            about_info.append(result["editorial_summary"].get("overview", ""))
+            summary = result["editorial_summary"].get("overview", "")
+            if summary:
+                about_info.append(f"📝 {summary}")
 
-        if "price_level" in result:
+        if "price_level" in result and result["price_level"] is not None:
             levels = ["Free", "Inexpensive", "Moderate", "Expensive", "Very Expensive"]
             price_text = levels[result["price_level"]] if result["price_level"] < len(levels) else "N/A"
-            about_info.append(f"💲 Price: {price_text}")
+            about_info.append(f"💲 Price Level: {price_text}")
 
-        # ✅ Add website if available
         if "website" in result:
             about_info.append(f"🌐 Website: {result['website']}")
 
-        # ✅ Compact opening hours formatter
+        if "formatted_phone_number" in result:
+            about_info.append(f"📞 Phone: {result['formatted_phone_number']}")
+
+        # Enhanced opening hours formatter
         if "opening_hours" in result:
             hours = result["opening_hours"].get("weekday_text", [])
             if hours:
-                def simplify_hours(hours_list):
-                    """Convert Google weekday_text into compact readable format."""
-                    day_map = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                formatted_hours = format_opening_hours(hours)
+                about_info.append(formatted_hours)
 
-                    # Parse into tuples (day, hours_string)
-                    parsed = []
-                    for i, entry in enumerate(hours_list):
-                        try:
-                            _, hrs = entry.split(": ", 1)
-                        except ValueError:
-                            hrs = entry
-                        parsed.append((day_map[i], hrs))
+        # Rating info
+        if "rating" in result and "user_ratings_total" in result:
+            rating = result["rating"]
+            total = result["user_ratings_total"]
+            about_info.append(f"⭐ {rating}/5 from {total} reviews")
 
-                    # Group consecutive days with the same hours
-                    groups = []
-                    for day, hrs in parsed:
-                        if not groups or groups[-1]["hours"] != hrs:
-                            groups.append({"days": [day], "hours": hrs})
-                        else:
-                            groups[-1]["days"].append(day)
-
-                    # Format groups compactly
-                    parts = []
-                    for g in groups:
-                        days = g["days"]
-                        if len(days) == 1:
-                            label = days[0]
-                        else:
-                            label = f"{days[0]}–{days[-1]}"
-                        parts.append(f"{label}: {g['hours']}")
-
-                    # Special simplifications
-                    if len(groups) == 1 and "Open 24 hours" in groups[0]["hours"]:
-                        return "🕒 Open 24/7"
-                    elif len(groups) == 1:
-                        return f"🕒 Daily: {groups[0]['hours']}"
-                    else:
-                        return "🕒 " + " | ".join(parts)
-
-                about_info.append(simplify_hours(hours))
-
-        if "types" in result:
-            types = [t.replace("_", " ").title() for t in result["types"]]
-            about_info.append(f"📌 Types: {', '.join(types)}")
-
-        return jsonify({"status": "ok", "photos": photos, "about": about_info})
+        return jsonify({
+            "status": "success", 
+            "photos": photos, 
+            "about": about_info
+        })
 
     except Exception as e:
-        print("❌ Place details error:", e)
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"❌ Place details error: {e}")
+        return jsonify({"status": "error", "message": "Failed to load place details"}), 500
+
+def format_opening_hours(hours_list):
+    """Convert Google weekday_text into compact readable format."""
+    try:
+        day_map = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+        # Parse into tuples (day, hours_string)
+        parsed = []
+        for i, entry in enumerate(hours_list):
+            try:
+                _, hrs = entry.split(": ", 1)
+            except ValueError:
+                hrs = entry
+            parsed.append((day_map[i], hrs))
+
+        # Group consecutive days with the same hours
+        groups = []
+        for day, hrs in parsed:
+            if not groups or groups[-1]["hours"] != hrs:
+                groups.append({"days": [day], "hours": hrs})
+            else:
+                groups[-1]["days"].append(day)
+
+        # Format groups compactly
+        parts = []
+        for g in groups:
+            days = g["days"]
+            if len(days) == 1:
+                label = days[0]
+            else:
+                label = f"{days[0]}–{days[-1]}"
+            parts.append(f"{label}: {g['hours']}")
+
+        # Special simplifications
+        if len(groups) == 1 and "Open 24 hours" in groups[0]["hours"]:
+            return "🕒 Open 24/7"
+        elif len(groups) == 1:
+            return f"🕒 Daily: {groups[0]['hours']}"
+        else:
+            return "🕒 " + " | ".join(parts[:3])  # Limit to 3 entries for brevity
+
+    except Exception:
+        return "🕒 Hours vary"
 
 # -----------------------------
-# Reverse geocode (for location box)
+# Reverse geocode (for location display)
 # -----------------------------
 @app.route("/reverse-geocode")
 def reverse_geocode():
     lat = request.args.get("lat")
     lng = request.args.get("lng")
+    
     if not lat or not lng:
         return jsonify({"status": "error", "message": "Missing coordinates"}), 400
 
     try:
+        lat, lng = float(lat), float(lng)
         results = gmaps.reverse_geocode((lat, lng))
+        
         if results:
             components = results[0].get("address_components", [])
             suburb = city = country = None
+            
             for comp in components:
-                if "sublocality" in comp["types"]:
+                types = comp.get("types", [])
+                if "sublocality" in types or "neighborhood" in types:
                     suburb = comp["long_name"]
-                if "locality" in comp["types"]:
+                elif "locality" in types:
                     city = comp["long_name"]
-                if "country" in comp["types"]:
+                elif "country" in types:
                     country = comp["long_name"]
 
-            location_text = ", ".join([p for p in [suburb, city, country] if p])
+            # Build location string
+            location_parts = [p for p in [suburb, city, country] if p]
+            if not location_parts:
+                location_text = f"{lat:.4f}, {lng:.4f}"
+            else:
+                location_text = ", ".join(location_parts)
+            
             return jsonify({"status": "ok", "address": location_text})
 
-        return jsonify({"status": "error", "message": "No address found"}), 404
+        return jsonify({"status": "error", "message": "Address not found"}), 404
+        
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid coordinates"}), 400
     except Exception as e:
-        print("❌ Reverse geocode error:", e)
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"❌ Reverse geocode error: {e}")
+        return jsonify({"status": "error", "message": "Geocoding service unavailable"}), 500
 
 # -----------------------------
 # Health check
 # -----------------------------
 @app.route("/health")
 def health_check():
-    return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat()})
+    return jsonify({
+        "status": "healthy", 
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "2.0.0"
+    })
 
 # -----------------------------
-# Auto-open browser
+# Error handlers
+# -----------------------------
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"status": "error", "message": "Endpoint not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"status": "error", "message": "Internal server error"}), 500
+
+# -----------------------------
+# Auto-open browser (development only)
 # -----------------------------
 if __name__ == "__main__":
     def open_browser_when_ready():
-        url = "http://127.0.0.1:5000/health"
-        for _ in range(50):
+        """Open browser once server is ready"""
+        health_url = "http://127.0.0.1:5000/health"
+        
+        for attempt in range(50):  # Try for 10 seconds
             try:
-                resp = requests.get(url, timeout=0.5)
+                resp = requests.get(health_url, timeout=1)
                 if resp.status_code == 200:
+                    print("🚀 Server ready! Opening browser...")
                     webbrowser.open("http://127.0.0.1:5000", new=2)
                     return
             except Exception:
                 pass
             time.sleep(0.2)
 
+        # Fallback - try to open anyway
         try:
             webbrowser.open("http://127.0.0.1:5000", new=2)
         except Exception:
-            pass
+            print("💡 Server running at http://127.0.0.1:5000")
 
+    print("🧭 Starting Nomad Scout...")
+    print("📍 Make sure your Google Maps API key is configured in .env")
+    
+    # Start browser opener in background
     threading.Thread(target=open_browser_when_ready, daemon=True).start()
-    app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
+    
+    # Run Flask app
+    app.run(
+        debug=True, 
+        use_reloader=False,  # Avoid double browser opening
+        host="0.0.0.0", 
+        port=5000
+    )

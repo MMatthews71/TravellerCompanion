@@ -1,13 +1,4 @@
-// DOM Elements
-const statusElement = document.getElementById('status');
-const resultsBody = document.getElementById('results-body');
-let serviceButtons;
-const sortButtons = document.querySelectorAll('.sort-btn');
-const foodTypeFilter = document.getElementById('food-type-filter');
-const supermarketTypeFilter = document.getElementById('supermarket-type-filter');
-const hostelTypeFilter = document.getElementById('hostel-type-filter');
-
-// Current state
+// Global state
 let currentLocation = null;
 let currentResults = [];
 let currentSort = 'distance';
@@ -16,670 +7,567 @@ let allFoodResults = [];
 let allSupermarketResults = [];
 let allHostelResults = [];
 
+// DOM elements
+const statusElement = document.getElementById('status-message');
+const resultsBody = document.getElementById('results-body');
+const resultsContainer = document.getElementById('results-container');
+const controlsBar = document.getElementById('controls-bar');
+const serviceButtons = document.querySelectorAll('.service-btn');
+const sortButtons = document.querySelectorAll('.sort-btn');
+const locationText = document.getElementById('location-text');
+const priceHeader = document.getElementById('price-header');
 
-
-// Initialize the application
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    serviceButtons = document.querySelectorAll('.service-btn');
-
-    serviceButtons.forEach(button => {
-        button.addEventListener('click', () => handleServiceClick(button));
-    });
-
-    sortButtons.forEach(button => {
-        button.addEventListener('click', () => handleSortClick(button));
-    });
-
-    if (foodTypeFilter) {
-        foodTypeFilter.addEventListener('change', filterFoodResults);
-    }
-
-    if (supermarketTypeFilter) {
-        supermarketTypeFilter.addEventListener('change', filterSupermarketResults);
-    }
-
-    if (hostelTypeFilter) {
-        hostelTypeFilter.addEventListener('change', filterHostelResults);
-    }
-    
+  initializeEventListeners();
+  detectLocation();
 });
 
-// Handle service button clicks
-// Handle service button clicks
-async function handleServiceClick(button) {
-    const service = button.dataset.service;
-    currentService = service;
-    const serviceName = button.textContent.trim();
+function initializeEventListeners() {
+  serviceButtons.forEach(button => {
+    button.addEventListener('click', () => handleServiceClick(button));
+  });
 
-    serviceButtons.forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
+  sortButtons.forEach(button => {
+    button.addEventListener('click', () => handleSortClick(button));
+  });
 
-    // Hide filters by default
-    document.querySelector('.food-filter-container')?.classList.add('hidden');
-    document.querySelector('.supermarket-filter-container')?.classList.add('hidden');
-    document.querySelector('.hostel-filter-container')?.classList.add('hidden');
-    
-    // Show/hide cost sort button based on service
-    const costSortBtn = document.getElementById('sort-cost');
-    if (service === 'food') {
-        costSortBtn.classList.remove('hidden');
-    } else {
-        costSortBtn.classList.add('hidden');
-        // Reset to distance sort if not on food service
-        if (costSortBtn.classList.contains('active')) {
-            document.getElementById('sort-distance').click();
-        }
-    } 
-    
-    // Map service names to their plural forms
-    const pluralForms = {
-        'laundry': 'laundries',
-        'pharmacy': 'pharmacies',
-        'supermarket': 'supermarkets',
-        'food': 'restaurants',
-        'atm': 'ATMs',
-        'hostel': 'hostels',
-        'bus_station': 'transport'
-    };
-    
-    const displayText = pluralForms[service] || `${serviceName}s`;
-    showStatus(`Finding nearby ${displayText}...`, 'info');
-
-    try {
-        const position = await getCurrentLocation();
-        currentLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-        };
-
-        // ✅ Update location box with city + country
-        updateLocationBox(currentLocation.lat, currentLocation.lng);
-
-        let results = [];
-
-        if (service === 'food') {
-            const categories = [
-                { key: 'restaurant', label: 'restaurant' },
-                { key: 'fast food', label: 'fast food' },
-                { key: 'cafe', label: 'cafe' }
-            ];
-
-            const searches = categories.map(cat =>
-                searchPlaces(cat.key, currentLocation, cat.key)
-            );
-            const resultsArrays = await Promise.all(searches);
-            const merged = [].concat(...resultsArrays);
-
-            const seen = new Set();
-            results = merged.filter(p => {
-                const key = p.place_id || `${p.name}|${p.address}`;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
-
-            allFoodResults = results;
-            document.querySelector('.food-filter-container').classList.remove('hidden');
-        }
-        else if (service === 'supermarket') {
-            const categories = [
-                { key: 'supermarket', label: 'supermarket' },
-                { key: 'convenience store', label: 'convenience store' },
-                { key: 'local market', label: 'local market' },
-                { key: 'general store', label: 'general store' }
-            ];
-
-            const searches = categories.map(cat =>
-                searchPlaces(cat.key, currentLocation, cat.key)
-            );
-            const resultsArrays = await Promise.all(searches);
-            const merged = [].concat(...resultsArrays);
-
-            const seen = new Set();
-            results = merged.filter(p => {
-                const key = p.place_id || `${p.name}|${p.address}`;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
-
-            allSupermarketResults = results;
-            document.querySelector('.supermarket-filter-container').classList.remove('hidden');
-        }
-        else if (service === 'hostel') {
-            const categories = [
-                { key: 'hostel', label: 'hostel' },
-                { key: 'hotel', label: 'hotel' },
-                { key: 'lodging', label: 'lodging' }
-            ];
-        
-            const searches = categories.map(cat =>
-                searchPlaces(cat.key, currentLocation, cat.key)
-            );
-            const resultsArrays = await Promise.all(searches);
-            const merged = [].concat(...resultsArrays);
-        
-            // Add category to each place and deduplicate
-            const seen = new Set();
-            results = merged.map(p => ({
-                ...p,
-                category: p.types && p.types[0] || p.category || 'lodging'  // Use the most specific category available
-            })).filter(p => {
-                const key = p.place_id || `${p.name}|${p.address}`;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
-        
-            allHostelResults = results;
-            document.querySelector('.hostel-filter-container').classList.remove('hidden');
-        }
-        else {
-            results = await searchPlaces(service, currentLocation);
-            allFoodResults = [];
-            allSupermarketResults = [];
-        }
-
-        currentResults = results;
-
-        // Map service names to their plural forms
-        const pluralForms = {
-            'laundry': { singular: 'laundry', plural: 'laundries' },
-            'pharmacy': { singular: 'pharmacy', plural: 'pharmacies' },
-            'supermarket': { singular: 'supermarket', plural: 'supermarkets' },
-            'food': { singular: 'restaurant', plural: 'restaurants' },
-            'atm': { singular: 'ATM', plural: 'ATMs' },
-            'hostel': { singular: 'hostel', plural: 'hostels' },
-            'bus_station': { singular: 'transport', plural: 'transport' }
-        };
-        
-        const serviceInfo = pluralForms[service] || { singular: serviceName.toLowerCase(), plural: `${serviceName.toLowerCase()}s` };
-        
-        if (results.length === 0) {
-            showStatus(`No ${serviceInfo.plural} found nearby.`, 'info');
-            clearResults();
-        } else {
-            const countText = results.length === 1 ? serviceInfo.singular : serviceInfo.plural;
-            showStatus(`Found ${results.length} ${countText} nearby.`, 'info');
-            displayResults(results);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showStatus(error.message, 'error');
-        clearResults();
+  const filters = ['food-type-filter', 'supermarket-type-filter', 'hostel-type-filter'];
+  filters.forEach(filterId => {
+    const filter = document.getElementById(filterId);
+    if (filter) {
+      filter.addEventListener('change', () => {
+        if (filterId.includes('food')) filterFoodResults();
+        else if (filterId.includes('supermarket')) filterSupermarketResults();
+        else if (filterId.includes('hostel')) filterHostelResults();
+      });
     }
+  });
+
+  // Click to dismiss status messages
+  statusElement.addEventListener('click', () => {
+    statusElement.classList.remove('visible');
+  });
+}
+
+async function detectLocation() {
+  try {
+    const position = await getCurrentLocation();
+    currentLocation = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
+    };
+    updateLocationDisplay(currentLocation.lat, currentLocation.lng);
+  } catch (error) {
+    console.warn('Location detection failed:', error);
+    currentLocation = { lat: -12.046374, lng: -77.042793 }; // Lima fallback
+    locationText.textContent = "Lima, Peru (fallback)";
+  }
 }
 
 function getCurrentLocation() {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            console.warn("Geolocation not supported, using fallback.");
-            resolve({ coords: { latitude: -12.046374, longitude: -77.042793 } }); // Lima
-            return;
-        }
-
-        // Check cached location first
-        const cached = localStorage.getItem("lastLocation");
-        if (cached) {
-            resolve({ coords: JSON.parse(cached) });
-        }
-
-        const options = { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 };
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-                localStorage.setItem("lastLocation", JSON.stringify(coords));
-                resolve({ coords });
-            },
-            (err) => {
-                console.warn("Location error, using fallback:", err);
-                resolve({ coords: { latitude: -12.046374, longitude: -77.042793 } });
-            },
-            options
-        );
-    });
-}
-
-
-// Search for places using backend API
-async function searchPlaces(keyword, location, category = null) {
-    try {
-        const params = new URLSearchParams({
-            lat: location.lat,
-            lng: location.lng,
-            keyword: keyword
-        });
-
-        const response = await fetch(`/search?${params}`);
-        const data = await response.json();
-
-        if (data.status === 'error') {
-            throw new Error(data.message || 'Failed to search for places.');
-        }
-
-        return data.results.map(place => {
-            // Determine which category to use based on current service
-            let placeCategory = category;
-            if (currentService === 'hostel') {
-                placeCategory = place.category || category;
-            }
-            
-            return {
-                ...place,
-                distance: calculateDistance(
-                    location.lat,
-                    location.lng,
-                    place.location.lat,
-                    place.location.lng
-                ),
-                foodCategory: currentService === 'food' ? category : null,
-                supermarketCategory: currentService === 'supermarket' ? category : null,
-                category: placeCategory  // Add the category to the place object
-            };
-        });
-    } catch (error) {
-        console.error('Search error:', error);
-        throw new Error('Failed to search for places. Please try again later.');
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported'));
+      return;
     }
-}
 
-// Distance calculation (Haversine)
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(1);
-}
-function toRad(degrees) { return degrees * (Math.PI / 180); }
-
-// Display results
-function displayResults(results) {
-    clearResults();
-    const resultsSection = document.getElementById('results-section');
-    const sortOptions = document.getElementById('sort-options');
-    
-    // Hide sort options by default
-    sortOptions.classList.add('hidden');
-    
-    resultsSection.classList.remove('hidden');
-
-    if (!results || results.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 8; // Updated to account for the new Price column
-        cell.textContent = 'No locations found.';
-        cell.className = 'no-results';
-        row.appendChild(cell);
-        resultsBody.appendChild(row);
+    // Check cached location first
+    const cached = localStorage.getItem("lastLocation");
+    if (cached) {
+      try {
+        const coords = JSON.parse(cached);
+        resolve({ coords });
         return;
+      } catch (e) {
+        // Invalid cached data, continue with fresh location
+      }
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 300000 // 5 minutes
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        localStorage.setItem("lastLocation", JSON.stringify(coords));
+        resolve({ coords });
+      },
+      reject,
+      options
+    );
+  });
+}
+
+async function updateLocationDisplay(lat, lng) {
+  try {
+    const response = await fetch(`/reverse-geocode?lat=${lat}&lng=${lng}`);
+    const data = await response.json();
+    if (data.status === "ok") {
+      locationText.textContent = data.address;
+    } else {
+      locationText.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  } catch (error) {
+    console.warn('Reverse geocoding failed:', error);
+    locationText.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}
+
+async function handleServiceClick(button) {
+  const service = button.dataset.service;
+  currentService = service;
+
+  // Update button states
+  serviceButtons.forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+
+  // Show controls
+  controlsBar.classList.remove('hidden');
+
+  // Hide all filters
+  document.querySelectorAll('[class*="-filter-container"]').forEach(container => {
+    container.classList.add('hidden');
+  });
+
+  // Show/hide price column and sort button
+  const costSortBtn = document.getElementById('sort-cost');
+  if (service === 'food') {
+    costSortBtn.classList.remove('hidden');
+    priceHeader.style.display = 'table-cell';
+  } else {
+    costSortBtn.classList.add('hidden');
+    priceHeader.style.display = 'none';
+    if (costSortBtn.classList.contains('active')) {
+      document.getElementById('sort-distance').click();
+    }
+  }
+
+  showStatus(`Searching for nearby ${getServiceDisplayName(service)}...`, 'info');
+
+  try {
+    if (!currentLocation) {
+      throw new Error('Location not available. Please allow location access.');
+    }
+
+    let results = [];
+
+    if (service === 'food') {
+      results = await searchMultipleCategories(['restaurant', 'fast food', 'cafe']);
+      allFoodResults = results;
+      document.querySelector('.food-filter-container').classList.remove('hidden');
+    } else if (service === 'supermarket') {
+      results = await searchMultipleCategories(['supermarket', 'convenience store', 'local market', 'general store']);
+      allSupermarketResults = results;
+      document.querySelector('.supermarket-filter-container').classList.remove('hidden');
+    } else if (service === 'hostel') {
+      results = await searchMultipleCategories(['hostel', 'hotel', 'lodging']);
+      allHostelResults = results;
+      document.querySelector('.hostel-filter-container').classList.remove('hidden');
+    } else {
+      results = await searchPlaces(service);
+    }
+
+    currentResults = results;
+    displayResults(results);
+
+    if (results.length === 0) {
+      showStatus(`No ${getServiceDisplayName(service)} found nearby.`, 'info');
+    } else {
+      showStatus(`Found ${results.length} ${getServiceDisplayName(service, results.length)}.`, 'info');
+    }
+
+  } catch (error) {
+    showStatus('Search failed. Please try again.', 'error');
+    console.error('Search error:', error);
+  }
+}
+
+async function searchMultipleCategories(categories) {
+  const searches = categories.map(category => searchPlaces(category, category));
+  const resultsArrays = await Promise.all(searches);
+  const merged = [].concat(...resultsArrays);
+
+  // Deduplicate
+  const seen = new Set();
+  return merged.filter(place => {
+    const key = place.place_id || `${place.name}|${place.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function searchPlaces(keyword, category = null) {
+  if (!currentLocation) {
+    throw new Error('Location not available');
+  }
+
+  try {
+    const params = new URLSearchParams({
+      lat: currentLocation.lat,
+      lng: currentLocation.lng,
+      keyword: keyword
+    });
+
+    const response = await fetch(`/search?${params}`);
+    const data = await response.json();
+
+    if (data.status === 'error') {
+      throw new Error(data.message || 'Search failed');
+    }
+
+    return data.results.map(place => ({
+      ...place,
+      distance: calculateDistance(
+        currentLocation.lat,
+        currentLocation.lng,
+        place.location.lat,
+        place.location.lng
+      ),
+      category: category || place.category,
+      walkTime: Math.round((calculateDistance(
+        currentLocation.lat,
+        currentLocation.lng,
+        place.location.lat,
+        place.location.lng
+      ) / 5) * 60) // Walking speed ~5 km/h
+    }));
+  } catch (error) {
+    console.error('Search error:', error);
+    throw error;
+  }
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
+}
+
+function toRad(degrees) {
+  return degrees * (Math.PI / 180);
+}
+
+function displayResults(results) {
+  resultsBody.innerHTML = '';
+  resultsContainer.classList.remove('hidden');
+
+  if (!results || results.length === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.textContent = 'No locations found.';
+    cell.style.textAlign = 'center';
+    cell.style.padding = '2rem';
+    cell.style.color = 'var(--text-muted)';
+    row.appendChild(cell);
+    resultsBody.appendChild(row);
+    return;
+  }
+
+  const sortedResults = sortResults(results, currentSort);
+
+  sortedResults.forEach(place => {
+    const row = document.createElement('tr');
+    row.dataset.placeId = place.place_id;
+
+    // Place name with icon
+    const nameCell = document.createElement('td');
+    const nameContent = document.createElement('div');
+    nameContent.className = 'place-name';
+    
+    if (place.icon) {
+      const icon = document.createElement('img');
+      icon.src = place.icon;
+      icon.className = 'place-icon';
+      icon.alt = place.name;
+      nameContent.appendChild(icon);
     }
     
-    // Show sort options since we have results
-    sortOptions.classList.remove('hidden');
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = place.name;
+    nameContent.appendChild(nameSpan);
+    nameCell.appendChild(nameContent);
 
-    const sortedResults = sortResults(results, currentSort);
+    // Category
+    const categoryCell = document.createElement('td');
+    categoryCell.textContent = formatCategoryName(place.category || 'general');
 
-    // Show/hide price column header based on current service
-    const priceHeader = document.querySelector('th:nth-child(3)');
-    if (priceHeader) {
-        priceHeader.style.display = currentService === 'food' ? 'table-cell' : 'none';
+    // Price (only for food)
+    const priceCell = document.createElement('td');
+    priceCell.className = 'price-display';
+    if (currentService === 'food') {
+      if (place.price_level !== undefined && place.price_level !== null) {
+        priceCell.textContent = '.repeat(Math.min(place.price_level + 1, 4))';
+
+      } else {
+        priceCell.textContent = '?';
+        priceCell.style.opacity = '0.6';
+      }
+    } else {
+      priceCell.style.display = 'none';
     }
 
-    sortedResults.forEach(place => {
-        const row = document.createElement('tr');
-        row.classList.add('place-row');
-        row.dataset.placeId = place.place_id;
+    // Rating
+    const ratingCell = document.createElement('td');
+    const ratingContent = document.createElement('div');
+    ratingContent.className = 'rating-display';
+    if (place.rating && place.rating !== 'N/A') {
+      ratingContent.innerHTML = `⭐ ${place.rating}`;
+    } else {
+      ratingContent.textContent = 'N/A';
+      ratingContent.style.opacity = '0.6';
+    }
+    ratingCell.appendChild(ratingContent);
 
-        const name = document.createElement('td');
+    // Total ratings
+    const ratingsCell = document.createElement('td');
+    ratingsCell.textContent = place.total_ratings || 'N/A';
 
-        // Add icon if available
-        if (place.icon) {
-            const iconImg = document.createElement('img');
-            iconImg.src = place.icon;
-            iconImg.alt = place.name;
-            iconImg.className = "place-icon"; // we'll style this
-            name.appendChild(iconImg);
-        }
+    // Status
+    const statusCell = document.createElement('td');
+    const statusBadge = document.createElement('span');
+    statusBadge.className = 'status-badge';
 
-        // Add the name text
-        const nameText = document.createElement('span');
-        nameText.textContent = place.name;
-        name.appendChild(nameText);
+    if (place.open_now === true) {
+      statusBadge.classList.add('open');
+      statusBadge.innerHTML = '🟢 Open';
+    } else if (place.open_now === false) {
+      statusBadge.classList.add('closed');
+      statusBadge.innerHTML = '🔴 Closed';
+    } else {
+      statusBadge.classList.add('unknown');
+      statusBadge.innerHTML = '⚪ Unknown';
+    }
+    statusCell.appendChild(statusBadge);
 
-        const category = document.createElement('td');
-        let categoryValue;
-        if (currentService === 'hostel') {
-            // For hostels, use the category from the place object first
-            categoryValue = place.category || place.types?.[0] || 'lodging';
-        } else if (currentService === 'laundry') {
-            // For laundry, use the specific category
-            categoryValue = 'laundry';
-        } else if (currentService === 'pharmacy') {
-            // For pharmacy, use the specific category
-            categoryValue = 'pharmacy';
-        } else if (currentService === 'atm') {
-            // For ATM, use the specific category
-            categoryValue = 'atm';
-        } else {
-            // For other services, use the existing logic
-            categoryValue = place.foodCategory || place.supermarketCategory || 'general';
-        }
-        const formattedCategory = formatCategoryName(categoryValue);
-        category.textContent = formattedCategory;
+    // Distance/Walk time
+    const distanceCell = document.createElement('td');
+    distanceCell.innerHTML = `🚶 ${place.walkTime} min`;
 
-        // Add price level
-        const price = document.createElement('td');
-        if (place.price_level !== undefined && place.price_level !== null) {
-            price.textContent = '$$$$'.substring(0, Math.min(place.price_level, 4));
-        } else {
-            price.textContent = '?';
-            price.style.opacity = '0.6'; // Make the ? slightly faded
-        }
+    row.appendChild(nameCell);
+    row.appendChild(categoryCell);
+    row.appendChild(priceCell);
+    row.appendChild(ratingCell);
+    row.appendChild(ratingsCell);
+    row.appendChild(statusCell);
+    row.appendChild(distanceCell);
 
-        const rating = document.createElement('td');
-        rating.textContent = place.rating !== 'N/A' ? place.rating : 'N/A';
-
-        const totalRatings = document.createElement('td');
-        totalRatings.textContent = place.total_ratings || 'N/A';
-
-        const status = document.createElement('td');
-        const statusBadge = document.createElement('span');
-
-        if (place.open_now === true) {
-            statusBadge.className = 'status open';
-            statusBadge.textContent = 'Open';
-        } else if (place.open_now === false) {
-            statusBadge.className = 'status closed';
-            statusBadge.textContent = 'Closed';
-        } else {
-            statusBadge.className = 'status unknown';
-            statusBadge.textContent = 'Unknown';
-        }
-
-        status.appendChild(statusBadge);
-
-
-        const distance = document.createElement('td');
-        const walkingMinutes = Math.round((place.distance / 5) * 60); // 5 km/h speed
-        distance.textContent = `${walkingMinutes} min`;
-
-        // Map link will be moved to the about section
-
-        row.appendChild(name);
-        row.appendChild(category);
-        
-        // Only show price column for food service
-        if (currentService === 'food') {
-            row.appendChild(price);
-        }
-        
-        row.appendChild(rating);
-        row.appendChild(totalRatings);
-        row.appendChild(status);
-        row.appendChild(distance);
-
-        row.addEventListener('click', () => toggleDetailsRow(place, row));
-
-        resultsBody.appendChild(row);
-    });
+    row.addEventListener('click', () => toggleDetailsRow(place, row));
+    resultsBody.appendChild(row);
+  });
 }
 
-// Clear results
-function clearResults() { resultsBody.innerHTML = ''; }
-
-// Handle sort clicks
-function handleSortClick(button) {
-    const sortBy = button.dataset.sort;
-    sortButtons.forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-    currentSort = sortBy;
-    if (currentResults.length > 0) displayResults(currentResults);
-}
-
-// Sort results
 function sortResults(results, sortBy) {
-    const sorted = [...results];
-    switch (sortBy) {
-        case 'distance':
-            return sorted.sort((a, b) => a.distance - b.distance);
-        case 'rating':
-            return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        case 'ratings':
-            return sorted.sort((a, b) => (b.total_ratings || 0) - (a.total_ratings || 0));
-        case 'cost':
-            // Sort by price level (lower is more expensive), with nulls last
-            return sorted.sort((a, b) => {
-                // Treat undefined/null price levels as Infinity (will be sorted to the end)
-                const aPrice = (a.price_level !== undefined && a.price_level !== null) ? a.price_level : Infinity;
-                const bPrice = (b.price_level !== undefined && b.price_level !== null) ? b.price_level : Infinity;
-                return aPrice - bPrice;
-            });
-        default:
-            return sorted;
-    }
+  const sorted = [...results];
+  switch (sortBy) {
+    case 'distance':
+      return sorted.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+    case 'rating':
+      return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case 'ratings':
+      return sorted.sort((a, b) => (b.total_ratings || 0) - (a.total_ratings || 0));
+    case 'cost':
+      return sorted.sort((a, b) => {
+        const aPrice = (a.price_level !== undefined && a.price_level !== null) ? a.price_level : Infinity;
+        const bPrice = (b.price_level !== undefined && b.price_level !== null) ? b.price_level : Infinity;
+        return aPrice - bPrice;
+      });
+    default:
+      return sorted;
+  }
 }
 
-// Status messages
-function showStatus(message, type = 'info') {
-    statusElement.textContent = message;
-    statusElement.className = 'status-message visible ' + type;
-    if (type === 'info') {
-        setTimeout(() => { statusElement.classList.remove('visible'); }, 5000);
-    }
+function handleSortClick(button) {
+  const sortBy = button.dataset.sort;
+  sortButtons.forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+  currentSort = sortBy;
+  if (currentResults.length > 0) {
+    displayResults(currentResults);
+  }
 }
 
-// Filtering
 function filterFoodResults() {
-    if (currentService !== 'food' || allFoodResults.length === 0) return;
-    const filterType = foodTypeFilter.value;
-    const filtered = filterType === 'all'
-        ? allFoodResults
-        : allFoodResults.filter(p => p.foodCategory === filterType);
-    currentResults = filtered;
-    displayResults(filtered);
+  if (currentService !== 'food' || allFoodResults.length === 0) return;
+  const filterType = document.getElementById('food-type-filter').value;
+  const filtered = filterType === 'all' 
+    ? allFoodResults 
+    : allFoodResults.filter(p => p.category === filterType);
+  currentResults = filtered;
+  displayResults(filtered);
 }
 
 function filterSupermarketResults() {
-    if (currentService !== 'supermarket' || allSupermarketResults.length === 0) return;
-    const filterType = supermarketTypeFilter.value;
-    const filtered = filterType === 'all'
-        ? allSupermarketResults
-        : allSupermarketResults.filter(p => p.supermarketCategory === filterType);
-    currentResults = filtered;
-    displayResults(filtered);
+  if (currentService !== 'supermarket' || allSupermarketResults.length === 0) return;
+  const filterType = document.getElementById('supermarket-type-filter').value;
+  const filtered = filterType === 'all' 
+    ? allSupermarketResults 
+    : allSupermarketResults.filter(p => p.category === filterType);
+  currentResults = filtered;
+  displayResults(filtered);
 }
+
 function filterHostelResults() {
-    if (currentService !== 'hostel' || allHostelResults.length === 0) return;
-    const filterType = hostelTypeFilter.value;
-    const filtered = filterType === 'all'
-        ? allHostelResults
-        : allHostelResults.filter(p => p.foodCategory === filterType || p.supermarketCategory === filterType || p.category === filterType);
-    currentResults = filtered;
-    displayResults(filtered);
+  if (currentService !== 'hostel' || allHostelResults.length === 0) return;
+  const filterType = document.getElementById('hostel-type-filter').value;
+  const filtered = filterType === 'all' 
+    ? allHostelResults 
+    : allHostelResults.filter(p => p.category === filterType);
+  currentResults = filtered;
+  displayResults(filtered);
 }
 
-
-// Format category names for display
-function formatCategoryName(category) {
-    const categoryMap = {
-        'restaurant': 'Restaurant',
-        'fast_food': 'Fast Food',
-        'cafe': 'Café',
-        'supermarket': 'Supermarket',
-        'convenience_store': 'Convenience Store',
-        'local_market': 'Local Market',
-        'hostel': 'Hostel',
-        'hotel': 'Hotel',
-        'lodging': 'Lodging',
-        'laundry': 'Laundry',
-        'atm': 'ATM',
-        'general': 'General'
-    };
-    
-    return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
-}
-
-// Toggle details row with photo gallery
 async function toggleDetailsRow(place, row) {
-    const existingDetailsRow = row.nextElementSibling;
-    if (existingDetailsRow && existingDetailsRow.classList.contains('details-row')) {
-        existingDetailsRow.remove();
-        return;
-    }
+  const existingDetailsRow = row.nextElementSibling;
+  if (existingDetailsRow && existingDetailsRow.classList.contains('details-row')) {
+    existingDetailsRow.remove();
+    return;
+  }
 
-    document.querySelectorAll('.details-row').forEach(r => r.remove());
+  // Remove other open details
+  document.querySelectorAll('.details-row').forEach(r => r.remove());
 
-    const detailsRow = document.createElement('tr');
-    detailsRow.classList.add('details-row');
+  const detailsRow = document.createElement('tr');
+  detailsRow.className = 'details-row';
 
-    const detailsCell = document.createElement('td');
-    detailsCell.colSpan = 6; // Updated to match new column count
-    detailsCell.textContent = 'Loading photos...';
-    detailsRow.appendChild(detailsCell);
+  const detailsCell = document.createElement('td');
+  detailsCell.colSpan = 7;
+  detailsCell.innerHTML = `
+    <div class="details-content">
+      <div class="about-section">
+        <h3 class="about-title">About ${place.name}</h3>
+        <div class="about-items" id="about-items-${place.place_id}">
+          <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
+          <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
+          <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
+          ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener">View on Google Maps</a></div>` : ''}
+        </div>
+      </div>
+      <div class="photo-gallery" id="photo-gallery-${place.place_id}">
+        Loading photos...
+      </div>
+    </div>
+  `;
 
-    row.insertAdjacentElement('afterend', detailsRow);
+  detailsRow.appendChild(detailsCell);
+  row.insertAdjacentElement('afterend', detailsRow);
 
+  // Load photos and additional details
+  if (place.place_id) {
     try {
-        if (!place.place_id) {
-            detailsCell.textContent = '⚠️ No place_id available for this location.';
-            return;
-        }
+      const response = await fetch(`/place-details?place_id=${place.place_id}`);
+      const data = await response.json();
 
-        console.log("Fetching photos for place_id:", place.place_id);
-        const response = await fetch(`/place-details?place_id=${place.place_id}`);
-        console.log("Raw photo fetch response:", response);
+      const aboutItems = document.getElementById(`about-items-${place.place_id}`);
+      const photoGallery = document.getElementById(`photo-gallery-${place.place_id}`);
 
-        const data = await response.json();
-        console.log("Photo fetch JSON:", data);
+      // Add additional about information
+      if (data.about && data.about.length > 0) {
+        data.about.forEach(item => {
+          const aboutItem = document.createElement('div');
+          aboutItem.className = 'about-item';
+          
+          if (item.includes('http')) {
+            const url = item.replace(/.*?Website: /, '').trim();
+            aboutItem.innerHTML = `🌐 <a href="${url}" target="_blank" rel="noopener">Visit Website</a>`;
+          } else {
+            aboutItem.textContent = item;
+          }
+          
+          aboutItems.appendChild(aboutItem);
+        });
+      }
 
-        detailsCell.innerHTML = '';
+      // Display photos
+      if (data.photos && data.photos.length > 0) {
+        photoGallery.innerHTML = '';
+        data.photos.forEach(photoUrl => {
+          const photoWrapper = document.createElement('div');
+          photoWrapper.className = 'photo-wrapper';
+          
+          const link = document.createElement('a');
+          link.href = photoUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          
+          const img = document.createElement('img');
+          img.src = photoUrl;
+          img.alt = place.name;
+          img.loading = 'lazy';
+          
+          link.appendChild(img);
+          photoWrapper.appendChild(link);
+          photoGallery.appendChild(photoWrapper);
+        });
+      } else {
+        photoGallery.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No photos available</div>';
+      }
 
-// Create main container for the about section
-const aboutSection = document.createElement('div');
-aboutSection.style.marginBottom = '15px';
-
-// Create the "About" title
-const aboutTitle = document.createElement('h4');
-aboutTitle.textContent = "About";
-aboutTitle.style.margin = '0 0 10px 0';
-aboutTitle.style.color = '#2c3e50';
-aboutTitle.style.fontSize = '1rem';
-aboutTitle.style.textAlign = 'left';
-aboutTitle.style.paddingLeft = '0';
-aboutSection.appendChild(aboutTitle);
-
-// Create container for the info items
-const infoContainer = document.createElement('div');
-infoContainer.style.display = 'flex';
-infoContainer.style.flexWrap = 'wrap';
-infoContainer.style.gap = '15px';
-infoContainer.style.alignItems = 'center';
-
-// Add price level to info container if not food service
-if (currentService !== 'food' && place.price_level !== undefined) {
-    const priceItem = document.createElement('div');
-    priceItem.classList.add('about-item');
-    priceItem.style.margin = '0';
-    priceItem.innerHTML = `💰 <strong>Price:</strong> ${'$'.repeat(Math.min(place.price_level, 4)) || 'N/A'}`;
-    infoContainer.appendChild(priceItem);
-}
-
-// Add about items to info container
-if (data.about && data.about.length > 0) {
-    data.about.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.classList.add('about-item');
-        itemDiv.style.margin = '0';
-        
-        // Detect website entries and make them clickable
-        if (item.startsWith("🌐 Website: ") || item.includes("http")) {
-            const url = item.replace("🌐 Website: ", "").trim();
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = "🌐 Website";
-            itemDiv.appendChild(link);
-        } else {
-            itemDiv.textContent = item;
-        }
-        
-        infoContainer.appendChild(itemDiv);
-    });
-
-}
-// Add map link to info container
-if (place.place_id) {
-    const mapItem = document.createElement('div');
-    mapItem.classList.add('about-item');
-    mapItem.style.margin = '0';
-    mapItem.innerHTML = `📍 <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener noreferrer">View on Map</a>`;
-    infoContainer.appendChild(mapItem);
-}
-
-aboutSection.appendChild(infoContainer);
-
-detailsCell.appendChild(aboutSection);
-
-        // Photos section (if available)
-        if (data.photos && data.photos.length > 0) {
-            const gallery = document.createElement('div');
-            gallery.classList.add('photo-gallery');
-
-            data.photos.forEach(url => {
-                const imgWrapper = document.createElement('div');
-                imgWrapper.classList.add('photo-wrapper');
-
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = place.name;
-                img.loading = "lazy";
-
-                const link = document.createElement('a');
-                link.href = url;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-
-                link.appendChild(img);
-                imgWrapper.appendChild(link);
-                gallery.appendChild(imgWrapper);
-            });
-
-            detailsCell.appendChild(gallery);
-        } else {
-            if (!data.about || data.about.length === 0) {
-                detailsCell.textContent = 'No details available.';
-            }
-        }
-
-    } catch (err) {
-        console.error('Photo fetch error:', err);
-        detailsCell.textContent = '❌ Failed to load photos.';
+    } catch (error) {
+      console.error('Failed to load place details:', error);
+      document.getElementById(`photo-gallery-${place.place_id}`).innerHTML = 
+        '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">Failed to load photos</div>';
     }
+  } else {
+    document.getElementById(`photo-gallery-${place.place_id}`).innerHTML = 
+      '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No additional details available</div>';
+  }
 }
-let currentAddress = null;
 
-async function updateLocationBox(lat, lng) {
-    if (currentAddress) {
-        document.getElementById("user-location").textContent = `📍 ${currentAddress}`;
-        return;
-    }
+function formatCategoryName(category) {
+  const categoryMap = {
+    'restaurant': 'Restaurant',
+    'fast food': 'Fast Food', 
+    'cafe': 'Café',
+    'supermarket': 'Supermarket',
+    'convenience store': 'Convenience',
+    'local market': 'Local Market',
+    'general store': 'General Store',
+    'hostel': 'Hostel',
+    'hotel': 'Hotel',
+    'lodging': 'Lodging',
+    'laundry': 'Laundry',
+    'pharmacy': 'Pharmacy',
+    'atm': 'ATM',
+    'bus_station': 'Transport'
+  };
+  
+  return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
+}
 
-    try {
-        const resp = await fetch(`/reverse-geocode?lat=${lat}&lng=${lng}`);
-        const data = await resp.json();
-        if (data.status === "ok") {
-            currentAddress = data.address;
-            document.getElementById("user-location").textContent = `📍 ${currentAddress}`;
-        } else {
-            document.getElementById("user-location").textContent = `📍 Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-        }
-    } catch {
-        document.getElementById("user-location").textContent = `📍 Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-    }
+function getServiceDisplayName(service, count = 1) {
+  const serviceNames = {
+    'laundry': { singular: 'laundry service', plural: 'laundry services' },
+    'pharmacy': { singular: 'pharmacy', plural: 'pharmacies' },
+    'supermarket': { singular: 'supermarket', plural: 'supermarkets' },
+    'food': { singular: 'restaurant', plural: 'restaurants' },
+    'atm': { singular: 'ATM', plural: 'ATMs' },
+    'hostel': { singular: 'hostel', plural: 'hostels' },
+    'bus_station': { singular: 'transport hub', plural: 'transport hubs' }
+  };
+
+  const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };
+  return count === 1 ? serviceInfo.singular : serviceInfo.plural;
+}
+
+function showStatus(message, type = 'info') {
+  statusElement.textContent = message;
+  statusElement.className = `status-message visible ${type}`;
+  
+  if (type === 'info') {
+    setTimeout(() => {
+      statusElement.classList.remove('visible');
+    }, 4000);
+  }
 }

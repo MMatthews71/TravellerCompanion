@@ -3,130 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nomad Scout</title>
+  <title>Nomad Scout - Your Travel Companion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ version }}">
-  <style>
-    .hidden{display:none;}
-
-    /* Location display in top right corner */
-    #user-location{
-      position:absolute;top:10px;right:20px;background:rgba(255,255,255,.9);
-      padding:6px 12px;border-radius:8px;font-size:14px;font-weight:500;color:#333;
-      box-shadow:0 2px 6px rgba(0,0,0,.15);z-index:1000;
-    }
-
-    /* Sticky bar */
-    .controls-bar{position:sticky;top:0;z-index:900;background:#fff;padding:10px 0;box-shadow:0 2px 4px rgba(0,0,0,.1);}
-
-    /* ---------- Header with logo + gradient title ---------- */
-    .app-header{padding:26px 0 8px;text-align:center;position:relative;}
-    .app-logo{
-      display:block;margin:0 auto 10px;width:90px;max-width:22vw;height:auto;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,.12));
-    }
-    .app-title{
-      font-family: 'Poppins','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
-      font-weight:800;letter-spacing:.6px;margin:0;
-      font-size:clamp(1.8rem, 2.2rem + 0.8vw, 2.8rem);
-      /* Gradient text (navy → royal → ice white) */
-      background: linear-gradient(90deg,#163e77 0%,#2a5298 55%,#eaf6ff 100%);
-      -webkit-background-clip:text; background-clip:text;
-      -webkit-text-fill-color:transparent; color:transparent;
-      /* Fallback color if gradient text unsupported */
-      color:#1e3c72;
-    }
-    .app-tagline{
-      margin-top:6px;color:#5f6b7a;font-size:.98rem;
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <header class="app-header">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Nomad Scout Logo" class="app-logo">
-      <h1 class="app-title">Nomad Scout</h1>
-      <p class="app-tagline">Find essential services near your location</p>
-      <div id="user-location" class="user-location">📍 Detecting location...</div>
-    </header>
-
-    <!-- ✅ Sticky controls wrapper -->
-    <div class="controls-bar">
-      <div class="services">
-        <button class="service-btn" data-service="laundry">Laundry</button>
-        <button class="service-btn" data-service="pharmacy">Pharmacy</button>
-        <button class="service-btn" data-service="supermarket">Supermarket</button>
-        <button class="service-btn" data-service="food">Food</button>
-        <button class="service-btn" data-service="atm">ATM</button>
-        <button class="service-btn" data-service="hostel">Hostel</button>
-        <button class="service-btn" data-service="bus_station">Transport</button>
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span>🧭</span>
+        <span>Your Travel Companion</span>
       </div>
-
-      <div id="status" class="status-message"></div>
-
-      <div id="sort-options" class="sort-options hidden">
-        <span>Sort by:</span>
-        <button id="sort-distance" class="sort-btn active" data-sort="distance">Distance</button>
-        <button id="sort-rating" class="sort-btn" data-sort="rating">Rating</button>
-        <button id="sort-ratings" class="sort-btn" data-sort="ratings"># of Ratings</button>
-        <button id="sort-cost" class="sort-btn food-sort hidden" data-sort="cost">Cost</button>
-
-        <!-- 🍽 Food filter -->
-        <div class="food-filter-container hidden">
-          <label for="food-type-filter">Food Type:</label>
-          <select id="food-type-filter" class="food-type-filter">
-            <option value="all">All</option>
-            <option value="restaurant">Restaurants</option>
-            <option value="fast food">Fast Food</option>
-            <option value="cafe">Cafés</option>
-          </select>
-        </div>
-
-        <!-- 🛒 Supermarket filter -->
-        <div class="supermarket-filter-container hidden">
-          <label for="supermarket-type-filter">Market Type:</label>
-          <select id="supermarket-type-filter" class="supermarket-type-filter">
-            <option value="all">All</option>
-            <option value="supermarket">Supermarkets</option>
-            <option value="convenience store">Convenience Stores</option>
-            <option value="local market">Local Markets</option>
-            <option value="general store">General Stores</option>
-          </select>
-        </div>
-
-        <!-- 🛏️ Hostel filter -->
-        <div class="hostel-filter-container hidden">
-          <label for="hostel-type-filter">Type:</label>
-          <select id="hostel-type-filter" class="hostel-type-filter">
-            <option value="all">All</option>
-            <option value="hostel">Hostels</option>
-            <option value="hotel">Hotels</option>
-            <option value="lodging">Other Lodging</option>
-          </select>
-        </div>
+      <h1 class="hero-title">Nomad Scout</h1>
+      <p class="hero-subtitle">Discover essential services wherever your adventure takes you. Smart, reliable, always ready.</p>
+      <div class="location-display" id="location-display">
+        <svg class="location-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+        <span id="location-text">Detecting your location...</span>
       </div>
     </div>
-    <!-- ✅ End sticky controls -->
+  </section>
 
-    <!-- Results section -->
-    <div id="results-section" class="results-container hidden">
-      <div class="table-container">
-        <table id="results-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Rating</th>
-              <th># Ratings</th>
-              <th>Status</th>
-              <th>Distance (walk)</th>
-            </tr>
-          </thead>
-          <tbody id="results-body"></tbody>
-        </table>
+  <!-- Services Section -->
+  <section class="services-section">
+    <div class="services-grid">
+      <button class="service-btn" data-service="laundry">
+        <div class="service-icon">🧺</div>
+        <div class="service-title">Laundry</div>
+        <div class="service-description">Clean clothes on the go</div>
+      </button>
+      
+      <button class="service-btn" data-service="pharmacy">
+        <div class="service-icon">💊</div>
+        <div class="service-title">Pharmacy</div>
+        <div class="service-description">Health & wellness needs</div>
+      </button>
+      
+      <button class="service-btn" data-service="supermarket">
+        <div class="service-icon">🛒</div>
+        <div class="service-title">Supermarket</div>
+        <div class="service-description">Groceries & essentials</div>
+      </button>
+      
+      <button class="service-btn" data-service="food">
+        <div class="service-icon">🍽️</div>
+        <div class="service-title">Food</div>
+        <div class="service-description">Restaurants & dining</div>
+      </button>
+      
+      <button class="service-btn" data-service="atm">
+        <div class="service-icon">💰</div>
+        <div class="service-title">ATM</div>
+        <div class="service-description">Cash when you need it</div>
+      </button>
+      
+      <button class="service-btn" data-service="hostel">
+        <div class="service-icon">🏨</div>
+        <div class="service-title">Hostel</div>
+        <div class="service-description">Budget accommodation</div>
+      </button>
+      
+      <button class="service-btn" data-service="bus_station">
+        <div class="service-icon">🚌</div>
+        <div class="service-title">Transport</div>
+        <div class="service-description">Get around town</div>
+      </button>
+    </div>
+  </section>
+
+  <!-- Controls Bar -->
+  <div class="controls-bar hidden" id="controls-bar">
+    <div class="controls-content">
+      <div class="sort-options">
+        <span class="sort-label">Sort by:</span>
+        <button class="sort-btn active" data-sort="distance" id="sort-distance">Distance</button>
+        <button class="sort-btn" data-sort="rating" id="sort-rating">Rating</button>
+        <button class="sort-btn" data-sort="ratings" id="sort-ratings"># Reviews</button>
+        <button class="sort-btn hidden" data-sort="cost" id="sort-cost">Price</button>
+      </div>
+
+      <!-- Food filter -->
+      <div class="food-filter-container hidden">
+        <select class="filter-select" id="food-type-filter">
+          <option value="all">All Food Types</option>
+          <option value="restaurant">Restaurants</option>
+          <option value="fast food">Fast Food</option>
+          <option value="cafe">Cafés</option>
+        </select>
+      </div>
+
+      <!-- Supermarket filter -->
+      <div class="supermarket-filter-container hidden">
+        <select class="filter-select" id="supermarket-type-filter">
+          <option value="all">All Markets</option>
+          <option value="supermarket">Supermarkets</option>
+          <option value="convenience store">Convenience</option>
+          <option value="local market">Local Markets</option>
+          <option value="general store">General Stores</option>
+        </select>
+      </div>
+
+      <!-- Hostel filter -->
+      <div class="hostel-filter-container hidden">
+        <select class="filter-select" id="hostel-type-filter">
+          <option value="all">All Lodging</option>
+          <option value="hostel">Hostels</option>
+          <option value="hotel">Hotels</option>
+          <option value="lodging">Other</option>
+        </select>
       </div>
     </div>
   </div>
+
+  <!-- Results Section -->
+  <div class="results-section">
+    <div class="results-container hidden" id="results-container">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Place</th>
+            <th>Category</th>
+            <th id="price-header">Price</th>
+            <th>Rating</th>
+            <th>Reviews</th>
+            <th>Status</th>
+            <th>Walk Time</th>
+          </tr>
+        </thead>
+        <tbody id="results-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Status Messages -->
+  <div class="status-message" id="status-message"></div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
 </body>
