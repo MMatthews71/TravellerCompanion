@@ -539,6 +539,7 @@ async function toggleDetailsRow(place, row) {
 
 function formatCategoryName(category) {
   const categoryMap = {
+    'food': 'Restaurant',
     'restaurant': 'Restaurant',
     'cafe': 'Café',
     'bakery': 'Café',

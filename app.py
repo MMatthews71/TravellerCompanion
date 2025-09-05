@@ -92,13 +92,21 @@ def search():
         seen_place_ids = set()
 
         if keyword.lower() == "food":
-            # Search order: Bakery → Café → Restaurant → Fast Food
+            # NEW ORDER: Food → Restaurants → Café → Fast Food
             search_categories = [
-                ("bakery", "cafe"),  # Bakeries become cafés
-                ("cafe", "cafe"),
-                ("restaurant", "restaurant"),
-                ("fast food", "fast_food")
-            ]
+        ("food", "food"),  # General food search
+        ("restaurant", "restaurant"),
+        ("dining", "restaurant"),
+        ("eat", "food"),
+        ("cafe", "cafe"),
+        ("coffee", "cafe"),
+        ("bakery", "cafe"),  # Bakeries become cafés
+        ("fast food", "fast_food"),
+        ("burger", "fast_food"),
+        ("pizza", "fast_food"),
+        ("takeaway", "fast_food"),
+        ("meal delivery", "fast_food")
+    ]
             
             for search_keyword, result_category in search_categories:
                 places_result = gmaps.places_nearby(
