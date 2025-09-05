@@ -308,9 +308,53 @@
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .filter-container {
+    display: flex;
     align-items: center;
     gap: 1rem;
+    width: 100%;
+  }
+  
+  .filter-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+  
+  .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: 1;
+  }
+  
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  
+  .filter-btn:hover {
+    background: var(--accent-teal);
+    color: white;
+    border-color: var(--accent-teal);
+  }
+  
+  .filter-btn.active {
+    background: var(--accent-teal);
+    color: white;
+    border-color: var(--accent-teal);
+    box-shadow: var(--shadow-sm);
   }
   
   .sort-options {

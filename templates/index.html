@@ -79,34 +79,37 @@
       </div>
 
       <!-- Food filter -->
-      <div class="food-filter-container hidden">
-        <select class="filter-select" id="food-type-filter">
-          <option value="all">All Food Types</option>
-          <option value="restaurant">Restaurants</option>
-          <option value="fast food">Fast Food</option>
-          <option value="cafe">Cafés</option>
-        </select>
+      <div class="filter-container food-filter-container hidden">
+        <span class="filter-label">Food Type:</span>
+        <div class="filter-options">
+          <button class="filter-btn active" data-filter="all" data-type="food">All</button>
+          <button class="filter-btn" data-filter="restaurant" data-type="food">Restaurants</button>
+          <button class="filter-btn" data-filter="fast food" data-type="food">Fast Food</button>
+          <button class="filter-btn" data-filter="cafe" data-type="food">Cafés</button>
+        </div>
       </div>
 
       <!-- Supermarket filter -->
-      <div class="supermarket-filter-container hidden">
-        <select class="filter-select" id="supermarket-type-filter">
-          <option value="all">All Markets</option>
-          <option value="supermarket">Supermarkets</option>
-          <option value="convenience store">Convenience</option>
-          <option value="local market">Local Markets</option>
-          <option value="general store">General Stores</option>
-        </select>
+      <div class="filter-container supermarket-filter-container hidden">
+        <span class="filter-label">Market Type:</span>
+        <div class="filter-options">
+          <button class="filter-btn active" data-filter="all" data-type="supermarket">All</button>
+          <button class="filter-btn" data-filter="supermarket" data-type="supermarket">Supermarkets</button>
+          <button class="filter-btn" data-filter="convenience store" data-type="supermarket">Convenience</button>
+          <button class="filter-btn" data-filter="local market" data-type="supermarket">Local Markets</button>
+          <button class="filter-btn" data-filter="general store" data-type="supermarket">General Stores</button>
+        </div>
       </div>
 
       <!-- Hostel filter -->
-      <div class="hostel-filter-container hidden">
-        <select class="filter-select" id="hostel-type-filter">
-          <option value="all">All Lodging</option>
-          <option value="hostel">Hostels</option>
-          <option value="hotel">Hotels</option>
-          <option value="lodging">Other</option>
-        </select>
+      <div class="filter-container hostel-filter-container hidden">
+        <span class="filter-label">Lodging Type:</span>
+        <div class="filter-options">
+          <button class="filter-btn active" data-filter="all" data-type="hostel">All</button>
+          <button class="filter-btn" data-filter="hostel" data-type="hostel">Hostels</button>
+          <button class="filter-btn" data-filter="hotel" data-type="hostel">Hotels</button>
+          <button class="filter-btn" data-filter="lodging" data-type="hostel">Other</button>
+        </div>
       </div>
     </div>
   </div>

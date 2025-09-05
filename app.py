@@ -37,6 +37,24 @@ if not GOOGLE_MAPS_API_KEY:
 
 gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
+def create_place_data(place, category):
+    """Helper function to create a standardized place data dictionary."""
+    return {
+        "name": place.get("name", "N/A"),
+        "address": place.get("vicinity", "N/A"),
+        "rating": place.get("rating", "N/A"),
+        "total_ratings": place.get("user_ratings_total", 0),
+        "open_now": place.get("opening_hours", {}).get("open_now"),
+        "place_id": place.get("place_id"),
+        "location": place.get("geometry", {}).get("location", {}),
+        "category": category,
+        "icon": place.get("icon"),
+        "icon_base": place.get("icon_mask_base_uri"),
+        "icon_bg": place.get("icon_background_color"),
+        "price_level": place.get("price_level"),
+        "types": place.get("types", [])
+    }
+
 # Default fallback (Lima, Peru)
 DEFAULT_LOCATION = {"lat": -12.046374, "lng": -77.042793}
 
@@ -93,29 +111,76 @@ def search():
             # Standard search for other services
             radius = 2000 if keyword in ["supermarket", "food", "restaurant"] else 1000
             
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=radius,
-                keyword=keyword,
-            )
-            
-            for place in places_result.get("results", []):
-                place_data = {
-                    "name": place.get("name", "N/A"),
-                    "address": place.get("vicinity", "N/A"),
-                    "rating": place.get("rating", "N/A"),
-                    "total_ratings": place.get("user_ratings_total", 0),
-                    "open_now": place.get("opening_hours", {}).get("open_now"),
-                    "place_id": place.get("place_id"),
-                    "location": place.get("geometry", {}).get("location", {}),
-                    "category": keyword,
-                    "icon": place.get("icon"),
-                    "icon_base": place.get("icon_mask_base_uri"),
-                    "icon_bg": place.get("icon_background_color"),
-                    "price_level": place.get("price_level"),
-                    "types": place.get("types", [])
-                }
-                results.append(place_data)
+            # For supermarket searches, we need to handle different types of markets
+            if keyword.lower() == "supermarket":
+                seen_place_ids = set()
+                
+                # 1. First search for supermarkets
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="supermarket",
+                    type="supermarket"
+                )
+                for place in places_result.get("results", []):
+                    place_id = place.get("place_id")
+                    if place_id and place_id not in seen_place_ids:
+                        place_data = create_place_data(place, "supermarket")
+                        results.append(place_data)
+                        seen_place_ids.add(place_id)
+                
+                # 2. Search for convenience stores
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="convenience store",
+                    type="convenience_store"
+                )
+                for place in places_result.get("results", []):
+                    place_id = place.get("place_id")
+                    if place_id and place_id not in seen_place_ids:
+                        place_data = create_place_data(place, "convenience store")
+                        results.append(place_data)
+                        seen_place_ids.add(place_id)
+                
+                # 3. Search for local/farmers markets
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="local market",
+                    type=["farmers_market", "open_air_market"]
+                )
+                for place in places_result.get("results", []):
+                    place_id = place.get("place_id")
+                    if place_id and place_id not in seen_place_ids:
+                        place_data = create_place_data(place, "local market")
+                        results.append(place_data)
+                        seen_place_ids.add(place_id)
+            else:
+                # Handle other search types (food, etc.)
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword=keyword,
+                )
+                
+                for place in places_result.get("results", []):
+                    place_data = {
+                        "name": place.get("name", "N/A"),
+                        "address": place.get("vicinity", "N/A"),
+                        "rating": place.get("rating", "N/A"),
+                        "total_ratings": place.get("user_ratings_total", 0),
+                        "open_now": place.get("opening_hours", {}).get("open_now"),
+                        "place_id": place.get("place_id"),
+                        "location": place.get("geometry", {}).get("location", {}),
+                        "category": keyword,
+                        "icon": place.get("icon"),
+                        "icon_base": place.get("icon_mask_base_uri"),
+                        "icon_bg": place.get("icon_background_color"),
+                        "price_level": place.get("price_level"),
+                        "types": place.get("types", [])
+                    }
+                    results.append(place_data)
 
         # Remove duplicates based on place_id or name+address
         seen = set()
