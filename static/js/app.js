@@ -157,11 +157,12 @@ async function handleServiceClick(button) {
     } else if (service === 'hostel') {
       results = await searchMultipleCategories(['lodging', 'hostel', 'hotel']);
       
-      // Process hostel results to ensure places with "hostel" or "hotel" in name have correct type
+      // Process accommodation results to ensure proper categorization
       results = results.map(place => {
         const name = place.name ? place.name.toLowerCase() : '';
         
-        if (name.includes('hostel') && place.types) {
+        // First check if it's a hostel or hotel by name
+        if (name.includes('hostel')) {
           // Create a new types array with "hostel" as the first element
           const newTypes = ['hostel', ...place.types.filter(type => type !== 'hostel')];
           return {
@@ -169,7 +170,7 @@ async function handleServiceClick(button) {
             types: newTypes,
             category: 'hostel' // Set category to hostel
           };
-        } else if (name.includes('hotel') && place.types) {
+        } else if (name.includes('hotel')) {
           // Create a new types array with "hotel" as the first element
           const newTypes = ['hotel', ...place.types.filter(type => type !== 'hotel')];
           return {
@@ -177,7 +178,14 @@ async function handleServiceClick(button) {
             types: newTypes,
             category: 'hotel' // Set category to hotel
           };
+        } else if (place.types && place.types.includes('lodging')) {
+          // If it's not a hostel or hotel by name but has lodging type, categorize as lodging
+          return {
+            ...place,
+            category: 'lodging' // Set category to lodging
+          };
         }
+        
         return place;
       });
       
@@ -485,8 +493,12 @@ function filterHostelResults(filterType) {
   const filtered = filterType === 'all' 
     ? allHostelResults 
     : allHostelResults.filter(p => {
-        // Check if the place's types array contains the filter type
-        return p.types && p.types.includes(filterType);
+        // For the "lodging" filter, only show places that are not hostels or hotels
+        if (filterType === 'lodging') {
+          return p.category === 'lodging';
+        }
+        // For other filters, check if the category matches
+        return p.category === filterType;
       });
   currentResults = filtered;
   displayResults(filtered);
