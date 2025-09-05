@@ -92,125 +92,100 @@ def search():
                     keyword=cat,
                 )
                 for place in places_result.get("results", []):
-                    results.append({
-                        "name": place.get("name", "N/A"),
-                        "address": place.get("vicinity", "N/A"),
-                        "rating": place.get("rating", "N/A"),
-                        "total_ratings": place.get("user_ratings_total", 0),
-                        "open_now": place.get("opening_hours", {}).get("open_now"),
-                        "place_id": place.get("place_id"),
-                        "location": place.get("geometry", {}).get("location", {}),
-                        "category": cat,
-                        "icon": place.get("icon"),
-                        "icon_base": place.get("icon_mask_base_uri"),
-                        "icon_bg": place.get("icon_background_color"),
-                        "price_level": place.get("price_level"),
-                        "types": place.get("types", [])
-                    })
-        else:
-            # Standard search for other services
-            radius = 2000 if keyword in ["supermarket", "food", "restaurant"] else 1000
-            
-            # For supermarket searches, we need to handle different types of markets
-            if keyword.lower() == "supermarket":
-                seen_place_ids = set()
-                
-                # 1. First search for supermarkets
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="supermarket",
-                    type="supermarket"
-                )
-                for place in places_result.get("results", []):
-                    place_id = place.get("place_id")
-                    if place_id and place_id not in seen_place_ids:
-                        place_data = create_place_data(place, "supermarket")
-                        results.append(place_data)
-                        seen_place_ids.add(place_id)
-                
-                # 2. Search for convenience stores
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="convenience store",
-                    type="convenience_store"
-                )
-                for place in places_result.get("results", []):
-                    place_id = place.get("place_id")
-                    if place_id and place_id not in seen_place_ids:
-                        place_data = create_place_data(place, "convenience store")
-                        results.append(place_data)
-                        seen_place_ids.add(place_id)
-                
-                # 3. Search for local/farmers markets
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=radius,
-                    keyword="local market",
-                    type=["farmers_market", "open_air_market"]
-                )
-                for place in places_result.get("results", []):
-                    place_id = place.get("place_id")
-                    if place_id and place_id not in seen_place_ids:
-                        place_data = create_place_data(place, "local market")
-                        results.append(place_data)
-                        seen_place_ids.add(place_id)
-                
-                # 4. Search for bakeries (but classify them as cafes in the food category)
-                # This is a no-op here since we'll handle bakeries in the food search instead
-            else:
-                # Handle other search types (food, etc.)
-                if keyword.lower() == "food":
-                    # For food searches, include bakeries but classify them as cafes
-                    places_result = gmaps.places_nearby(
-                        location=(lat, lng),
-                        radius=radius,
-                        keyword=keyword,
-                    )
-                    
-                    # Also search specifically for bakeries
-                    bakery_result = gmaps.places_nearby(
-                        location=(lat, lng),
-                        radius=radius,
-                        keyword="bakery",
-                        type="bakery"
-                    )
-                    
-                    # Combine results
-                    all_places = places_result.get("results", []) + bakery_result.get("results", [])
-                else:
-                    # For other searches, just use the normal search
-                    places_result = gmaps.places_nearby(
-                        location=(lat, lng),
-                        radius=radius,
-                        keyword=keyword,
-                    )
-                    all_places = places_result.get("results", [])
-                
-                for place in all_places:
-                    # Classify bakeries as cafes in the food category
-                    place_types = place.get("types", [])
-                    category = "cafe" if "bakery" in place_types else keyword
-                    
-                    place_data = {
-                        "name": place.get("name", "N/A"),
-                        "address": place.get("vicinity", "N/A"),
-                        "rating": place.get("rating", "N/A"),
-                        "total_ratings": place.get("user_ratings_total", 0),
-                        "open_now": place.get("opening_hours", {}).get("open_now"),
-                        "place_id": place.get("place_id"),
-                        "location": place.get("geometry", {}).get("location", {}),
-                        "category": category,
-                        "icon": place.get("icon"),
-                        "icon_base": place.get("icon_mask_base_uri"),
-                        "icon_bg": place.get("icon_background_color"),
-                        "price_level": place.get("price_level"),
-                        "types": place_types
-                    }
-                    results.append(place_data)
+                    results.append(create_place_data(place, cat))
 
-        # Remove duplicates based on place_id or name+address
+        elif keyword.lower() == "supermarket":
+            # Handle different market types
+            seen_place_ids = set()
+
+            # Supermarkets
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="supermarket",
+                type="supermarket"
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "supermarket"))
+                    seen_place_ids.add(pid)
+
+            # Convenience stores
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="convenience store",
+                type="convenience_store"
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "convenience store"))
+                    seen_place_ids.add(pid)
+
+            # Local/farmers markets
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="local market",
+                type=["farmers_market", "open_air_market"]
+            )
+            for place in places_result.get("results", []):
+                pid = place.get("place_id")
+                if pid and pid not in seen_place_ids:
+                    results.append(create_place_data(place, "local market"))
+                    seen_place_ids.add(pid)
+
+        elif keyword.lower() == "pharmacy":
+            # Healthcare: pharmacies + hospitals
+            categories = ["pharmacy", "hospital"]
+            seen_place_ids = set()
+            for cat in categories:
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=2000,
+                    keyword=cat,
+                    type=cat
+                )
+                for place in places_result.get("results", []):
+                    pid = place.get("place_id")
+                    if pid and pid not in seen_place_ids:
+                        results.append(create_place_data(place, cat))
+                        seen_place_ids.add(pid)
+
+        else:
+            # General search (food, atm, etc.)
+            radius = 2000 if keyword.lower() in ["supermarket", "food", "restaurant"] else 1000
+
+            if keyword.lower() == "food":
+                # Include bakeries as cafes
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="restaurant"
+                )
+                bakery_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="bakery",
+                    type="bakery"
+                )
+                all_places = places_result.get("results", []) + bakery_result.get("results", [])
+            else:
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword=keyword,
+                )
+                all_places = places_result.get("results", [])
+
+            for place in all_places:
+                place_types = place.get("types", [])
+                category = "cafe" if "bakery" in place_types and keyword.lower() == "food" else keyword.lower()
+                results.append(create_place_data(place, category))
+
+        # Deduplicate across all branches
         seen = set()
         unique_results = []
         for result in results:

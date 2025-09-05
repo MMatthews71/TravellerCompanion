@@ -6,6 +6,8 @@ let currentService = null;
 let allFoodResults = [];
 let allSupermarketResults = [];
 let allHostelResults = [];
+let allHealthcareResults = [];
+
 
 // DOM elements
 const statusElement = document.getElementById('status-message');
@@ -113,73 +115,82 @@ async function updateLocationDisplay(lat, lng) {
 }
 
 async function handleServiceClick(button) {
-  const service = button.dataset.service;
-  currentService = service;
-
-  // Update button states
-  serviceButtons.forEach(btn => btn.classList.remove('active'));
-  button.classList.add('active');
-
-  // Show controls
-  controlsBar.classList.remove('hidden');
-
-  // Hide all filters
-  document.querySelectorAll('[class*="-filter-container"]').forEach(container => {
-    container.classList.add('hidden');
-  });
-
-  // Show/hide price column and sort button
-  const costSortBtn = document.getElementById('sort-cost');
-  if (service === 'food') {
-    costSortBtn.classList.remove('hidden');
-    priceHeader.style.display = 'table-cell';
-  } else {
-    costSortBtn.classList.add('hidden');
-    priceHeader.style.display = 'none';
-    if (costSortBtn.classList.contains('active')) {
-      document.getElementById('sort-distance').click();
-    }
-  }
-
-  showStatus(`Searching for nearby ${getServiceDisplayName(service)}...`, 'info');
-
-  try {
-    if (!currentLocation) {
-      throw new Error('Location not available. Please allow location access.');
-    }
-
-    let results = [];
-
+    const service = button.dataset.service;
+    currentService = service;
+  
+    // Update button states
+    serviceButtons.forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+  
+    // Show controls
+    controlsBar.classList.remove('hidden');
+  
+    // Hide all filters
+    document.querySelectorAll('[class*="-filter-container"]').forEach(container => {
+      container.classList.add('hidden');
+    });
+  
+    // Show/hide price column and sort button
+    const costSortBtn = document.getElementById('sort-cost');
     if (service === 'food') {
-      results = await searchMultipleCategories(['restaurant', 'fast food', 'cafe']);
-      allFoodResults = results;
-      document.querySelector('.food-filter-container').classList.remove('hidden');
-    } else if (service === 'supermarket') {
-      results = await searchMultipleCategories(['supermarket', 'convenience store', 'local market', 'general store']);
-      allSupermarketResults = results;
-      document.querySelector('.supermarket-filter-container').classList.remove('hidden');
-    } else if (service === 'hostel') {
-      results = await searchMultipleCategories(['hostel', 'hotel', 'lodging']);
-      allHostelResults = results;
-      document.querySelector('.hostel-filter-container').classList.remove('hidden');
+      costSortBtn.classList.remove('hidden');
+      priceHeader.style.display = 'table-cell';
     } else {
-      results = await searchPlaces(service);
+      costSortBtn.classList.add('hidden');
+      priceHeader.style.display = 'none';
+      if (costSortBtn.classList.contains('active')) {
+        document.getElementById('sort-distance').click();
+      }
     }
-
-    currentResults = results;
-    displayResults(results);
-
-    if (results.length === 0) {
-      showStatus(`No ${getServiceDisplayName(service)} found nearby.`, 'info');
-    } else {
-      showStatus(`Found ${results.length} ${getServiceDisplayName(service, results.length)}.`, 'info');
+  
+    showStatus(`Searching for nearby ${getServiceDisplayName(service)}...`, 'info');
+  
+    try {
+      if (!currentLocation) {
+        throw new Error('Location not available. Please allow location access.');
+      }
+  
+      let results = [];
+  
+      if (service === 'food') {
+        results = await searchMultipleCategories(['restaurant', 'fast food', 'cafe']);
+        allFoodResults = results;
+        document.querySelector('.food-filter-container').classList.remove('hidden');
+  
+      } else if (service === 'supermarket') {
+        results = await searchMultipleCategories(['supermarket', 'convenience store', 'local market', 'general store']);
+        allSupermarketResults = results;
+        document.querySelector('.supermarket-filter-container').classList.remove('hidden');
+  
+      } else if (service === 'hostel') {
+        results = await searchMultipleCategories(['hostel', 'hotel', 'lodging']);
+        allHostelResults = results;
+        document.querySelector('.hostel-filter-container').classList.remove('hidden');
+  
+      } else if (service === 'pharmacy') {
+        results = await searchMultipleCategories(['pharmacy', 'hospital']);
+        allHealthcareResults = results;
+        document.querySelector('.healthcare-filter-container').classList.remove('hidden');
+  
+      } else {
+        results = await searchPlaces(service);
+      }
+  
+      currentResults = results;
+      displayResults(results);
+  
+      if (results.length === 0) {
+        showStatus(`No ${getServiceDisplayName(service)} found nearby.`, 'info');
+      } else {
+        showStatus(`Found ${results.length} ${getServiceDisplayName(service, results.length)}.`, 'info');
+      }
+  
+    } catch (error) {
+      showStatus('Search failed. Please try again.', 'error');
+      console.error('Search error:', error);
     }
-
-  } catch (error) {
-    showStatus('Search failed. Please try again.', 'error');
-    console.error('Search error:', error);
   }
-}
+  
 
 async function searchMultipleCategories(categories) {
   const searches = categories.map(category => searchPlaces(category, category));
@@ -429,7 +440,10 @@ document.addEventListener('click', (e) => {
       filterSupermarketResults(filterValue);
     } else if (filterType === 'hostel') {
       filterHostelResults(filterValue);
-    }
+    } else if (filterType === 'healthcare') {
+        filterHealthcareResults(filterValue);
+      }
+      
   }
 });
 
@@ -581,7 +595,8 @@ function formatCategoryName(category) {
     'lodging': 'Lodging',
     'laundry': 'Laundry',
     'pharmacy': 'Pharmacy',
-    'atm': 'ATM'
+    'atm': 'ATM',
+    'hospital': 'Hospital'
   };
   
   return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
@@ -595,6 +610,7 @@ function getServiceDisplayName(service, count = 1) {
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
     'hostel': { singular: 'accommodation', plural: 'accommodations' }
+
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };
@@ -611,3 +627,12 @@ function showStatus(message, type = 'info') {
     }, 4000);
   }
 }
+function filterHealthcareResults(filterType) {
+    if (currentService !== 'pharmacy' || allHealthcareResults.length === 0) return;
+    const filtered = filterType === 'all' 
+      ? allHealthcareResults 
+      : allHealthcareResults.filter(p => p.category === filterType);
+    currentResults = filtered;
+    displayResults(filtered);
+  }
+  
