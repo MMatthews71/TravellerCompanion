@@ -61,8 +61,6 @@ function initializeEventListeners() {
         filterHostelResults(filterValue);
       } else if (filterType === 'healthcare') {
         filterHealthcareResults(filterValue);
-      } else if (filterType === 'sim') {
-        filterSimResults(filterValue);
       }
     }
   });
@@ -189,11 +187,6 @@ async function handleServiceClick(button) {
       results = await searchPlaces('pharmacy');
       allHealthcareResults = results;
       document.querySelector('.healthcare-filter-container').classList.remove('hidden');
-
-    } else if (service === 'sim') {
-      results = await searchPlaces('sim');
-      allSimResults = results;
-      document.querySelector('.sim-filter-container').classList.remove('hidden');
 
     } else {
       results = await searchPlaces(service);
@@ -443,15 +436,6 @@ function filterHealthcareResults(filterType) {
   const filtered = filterType === 'all' 
     ? allHealthcareResults 
     : allHealthcareResults.filter(p => p.category === filterType);
-  currentResults = filtered;
-  displayResults(filtered);
-}
-
-function filterSimResults(filterType) {
-  if (currentService !== 'sim' || allSimResults.length === 0) return;
-  const filtered = filterType === 'all' 
-    ? allSimResults 
-    : allSimResults.filter(p => p.category === filterType);
   currentResults = filtered;
   displayResults(filtered);
 }
