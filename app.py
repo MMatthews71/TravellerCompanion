@@ -156,6 +156,20 @@ def search():
                         place_data = create_place_data(place, "local market")
                         results.append(place_data)
                         seen_place_ids.add(place_id)
+                
+                # 4. Search for bakeries
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=radius,
+                    keyword="bakery",
+                    type="bakery"
+                )
+                for place in places_result.get("results", []):
+                    place_id = place.get("place_id")
+                    if place_id and place_id not in seen_place_ids:
+                        place_data = create_place_data(place, "bakery")
+                        results.append(place_data)
+                        seen_place_ids.add(place_id)
             else:
                 # Handle other search types (food, etc.)
                 places_result = gmaps.places_nearby(
