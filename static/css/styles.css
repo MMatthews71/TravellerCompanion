@@ -70,7 +70,6 @@
     pointer-events: none;
   }
   
-  
   /* Ensure proper vertical stacking in hero section */
   .hero-content {
     position: relative;
@@ -83,7 +82,7 @@
     flex-direction: column;
     align-items: center;
   }
-
+  
   /* Badge should be above title */
   .hero-badge {
     display: inline-flex;
@@ -100,7 +99,7 @@
     backdrop-filter: blur(10px);
     order: 1; /* Ensure it comes first */
   }
-
+  
   /* Title comes after badge */
   .hero-title {
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
@@ -121,7 +120,7 @@
     /* Subtle depth */
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
-
+  
   /* Subtitle comes after title */
   .hero-subtitle {
     font-size: 1.25rem;
@@ -130,7 +129,7 @@
     max-width: 600px;
     order: 3; /* Comes after title */
   }
-
+  
   /* Location display comes last */
   .location-display {
     display: inline-flex;
@@ -146,7 +145,7 @@
     margin-bottom: 2rem;
     order: 4; /* Comes last */
   }
-
+  
   /* Simple fallback for accessibility */
   @media (prefers-contrast: high) {
     .hero-title {
@@ -157,7 +156,6 @@
       color: #ffffff;
     }
   }
-    
     
   .location-icon {
     width: 16px;
@@ -497,7 +495,7 @@
   }
   
   /* =========================
-     Details Row
+     Details Row - Three Column Layout
      ========================= */
   .details-row {
     background: var(--bg-primary);
@@ -507,53 +505,99 @@
     padding: 2rem;
   }
   
-  .about-section {
-    margin-bottom: 2rem;
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+    min-height: 400px;
   }
   
-  .about-title {
+  /* Section titles */
+  .section-title {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1rem;
+    border-bottom: 2px solid var(--accent-teal);
+    padding-bottom: 0.5rem;
+  }
+  
+  /* About Section */
+  .about-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
   }
   
   .about-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
   }
   
   .about-item {
-    background: var(--bg-card);
+    background: var(--bg-primary);
     padding: 1rem;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border-light);
     font-size: 0.875rem;
     color: var(--text-secondary);
+    transition: var(--transition);
+  }
+  
+  .about-item:hover {
+    background: var(--bg-card);
+    border-color: var(--accent-teal);
+    transform: translateY(-1px);
   }
   
   .about-item a {
     color: var(--accent-teal);
     text-decoration: none;
+    font-weight: 500;
   }
   
   .about-item a:hover {
     text-decoration: underline;
   }
   
-  .photo-gallery {
+  /* Photos Section */
+  .photos-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .photos-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-medium) transparent;
+  }
+  
+  .photos-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .photos-container::-webkit-scrollbar-thumb {
+    background-color: var(--border-medium);
+    border-radius: 3px;
   }
   
   .photo-wrapper {
-    aspect-ratio: 4/3;
-    border-radius: var(--radius-md);
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
+    cursor: pointer;
   }
   
   .photo-wrapper:hover {
@@ -567,6 +611,150 @@
     object-fit: cover;
   }
   
+  /* Map Section */
+  .map-section-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .map-info {
+    margin-bottom: 1rem;
+  }
+  
+  .map-distance {
+    color: var(--accent-teal);
+    font-weight: 500;
+    font-size: 0.875rem;
+    background: rgba(6, 182, 212, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-lg);
+    display: inline-block;
+  }
+  
+  .map-container {
+    height: 240px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background: var(--bg-primary);
+  }
+  
+  .leaflet-container {
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg-primary) !important;
+  }
+  
+  /* Marker styles */
+  .marker-pulse {
+    position: relative;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  
+  .marker-inner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    font-size: 16px;
+  }
+  
+  .current-location-marker .marker-inner {
+    background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  }
+  
+  .place-marker .marker-inner {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  }
+  
+  /* Distance label */
+  .distance-label {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--accent-teal);
+    border-radius: var(--radius-lg);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-teal);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .distance-label div {
+    transform: translateY(-1px);
+  }
+  
+  /* Line style */
+  .leaflet-overlay-pane path {
+    stroke-linecap: round;
+  }
+  
+  /* Map controls removal */
+  .leaflet-control-container {
+    display: none !important;
+  }
+  
+  .map-legend {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+  }
+  
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+  }
+  
+  .current-dot {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+  }
+  
+  .place-dot {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+  }
+  
+  /* No content message */
+  .no-content {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem 1rem;
+    font-style: italic;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-medium);
+  }
+  
   /* =========================
      Utilities
      ========================= */
@@ -577,9 +765,18 @@
   /* =========================
      Responsive Design
      ========================= */
-  @media (max-width: 1024px) {
+  @media (max-width: 1200px) {
     .services-grid {
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+    
+    .details-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    
+    .map-section-container {
+      grid-column: span 2;
     }
   }
   
@@ -631,6 +828,42 @@
     .results-table td {
       padding: 0.75rem 0.5rem;
     }
+  
+    .details-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .details-content {
+      padding: 1rem;
+    }
+    
+    .about-section,
+    .photos-section,
+    .map-section-container {
+      padding: 1rem;
+      grid-column: span 1;
+    }
+    
+    .map-container {
+      height: 200px;
+    }
+    
+    .photos-container {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      max-height: 200px;
+    }
+    
+    .map-legend {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .marker-inner {
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+    }
   }
   
   @media (max-width: 480px) {
@@ -655,217 +888,17 @@
     .sort-options {
       justify-content: center;
     }
+    
+    .section-title {
+      font-size: 1rem;
+    }
+    
+    .about-item {
+      padding: 0.75rem;
+      font-size: 0.8rem;
+    }
+    
+    .photos-container {
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
   }
-
-  /* Add to styles.css */
-.map-container {
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.leaflet-container {
-  border-radius: var(--radius-md);
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
-}
-
-.current-location-marker,
-.place-marker {
-  background: none !important;
-  border: none !important;
-}
-
-.leaflet-popup-content {
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.leaflet-popup-content strong {
-  color: var(--text-primary);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-/* Responsive map */
-@media (max-width: 768px) {
-  .map-container {
-      height: 250px !important;
-      margin: 0.5rem 0 !important;
-  }
-}
-
-/* Add to styles.css */
-.map-container {
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  margin: 1rem 0;
-  background: var(--bg-primary);
-}
-
-.leaflet-container {
-  border-radius: var(--radius-md);
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
-  background: var(--bg-primary) !important;
-}
-
-/* Marker styles */
-.marker-pulse {
-  position: relative;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.marker-inner {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 3px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
-  font-size: 16px;
-}
-
-.current-location-marker .marker-inner {
-  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
-}
-
-.place-marker .marker-inner {
-  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-}
-
-/* Distance label */
-.distance-label {
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid var(--accent-teal);
-  border-radius: var(--radius-lg);
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent-teal);
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.distance-label div {
-  transform: translateY(-1px);
-}
-
-/* Line style */
-.leaflet-overlay-pane path {
-  stroke-linecap: round;
-}
-
-/* Map controls removal */
-.leaflet-control-container {
-  display: none !important;
-}
-
-/* Responsive map */
-@media (max-width: 768px) {
-  .map-container {
-      height: 250px !important;
-      margin: 0.5rem 0 !important;
-  }
-  
-  .marker-inner {
-      width: 28px;
-      height: 28px;
-      font-size: 14px;
-  }
-}
-/* Add to styles.css */
-.map-section {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--border-light);
-}
-
-.map-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.map-header h4 {
-  color: var(--text-primary);
-  font-weight: 600;
-  margin: 0;
-}
-
-.map-distance {
-  color: var(--accent-teal);
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.map-legend {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-light);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: var(--shadow-sm);
-}
-
-.current-dot {
-  background: linear-gradient(135deg, #06b6d4, #0891b2);
-}
-
-.place-dot {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.photo-gallery h4 {
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
-
-.photos-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-@media (max-width: 768px) {
-  .map-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-  }
-  
-  .map-legend {
-      flex-direction: column;
-      gap: 0.75rem;
-  }
-  
-  .map-section {
-      padding: 1rem;
-  }
-}

@@ -458,37 +458,44 @@ async function toggleDetailsRow(place, row) {
   detailsRow.innerHTML = `
       <td colspan="7">
           <div class="details-content">
-              <div class="map-section">
-                  <div class="map-header">
-                      <h4>📍 Location Map</h4>
-                      <span class="map-distance">${place.distance} km away • ${place.walkTime} min walk</span>
-                  </div>
-                  <div class="map-container" id="${mapContainerId}" style="height: 300px;"></div>
-                  <div class="map-legend">
-                      <div class="legend-item">
-                          <span class="legend-dot current-dot"></span>
-                          Your location
-                      </div>
-                      <div class="legend-item">
-                          <span class="legend-dot place-dot"></span>
-                          ${place.name}
+              <div class="details-grid">
+                  <!-- About Section -->
+                  <div class="about-section">
+                      <h4 class="section-title">📝 About</h4>
+                      <div class="about-items" id="about-items-${place.place_id}">
+                          <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
+                          <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
+                          <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
+                          ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
                       </div>
                   </div>
-              </div>
-              
-              <div class="about-section">
-                  <h3 class="about-title">About ${place.name}</h3>
-                  <div class="about-items" id="about-items-${place.place_id}">
-                      <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
-                      <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
-                      <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
-                      ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
+                  
+                  <!-- Photos Section -->
+                  <div class="photos-section">
+                      <h4 class="section-title">📸 Photos</h4>
+                      <div class="photos-container" id="photos-container-${place.place_id}">
+                          Loading photos...
+                      </div>
                   </div>
-              </div>
-              
-              <div class="photo-gallery" id="photo-gallery-${place.place_id}">
-                  <h4>📸 Photos</h4>
-                  <div class="photos-container">Loading photos...</div>
+                  
+                  <!-- Map Section -->
+                  <div class="map-section-container">
+                      <h4 class="section-title">📍 Map</h4>
+                      <div class="map-info">
+                          <span class="map-distance">${place.distance} km • ${place.walkTime} min walk</span>
+                      </div>
+                      <div class="map-container" id="${mapContainerId}"></div>
+                      <div class="map-legend">
+                          <div class="legend-item">
+                              <span class="legend-dot current-dot"></span>
+                              Your location
+                          </div>
+                          <div class="legend-item">
+                              <span class="legend-dot place-dot"></span>
+                              ${place.name}
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div>
       </td>
@@ -508,7 +515,7 @@ async function toggleDetailsRow(place, row) {
           const data = await response.json();
 
           const aboutItems = document.getElementById(`about-items-${place.place_id}`);
-          const photosContainer = document.querySelector(`#photo-gallery-${place.place_id} .photos-container`);
+          const photosContainer = document.getElementById(`photos-container-${place.place_id}`);
 
           // Add additional about information
           if (data.about && data.about.length > 0) {
@@ -549,17 +556,17 @@ async function toggleDetailsRow(place, row) {
                   photosContainer.appendChild(photoWrapper);
               });
           } else {
-              photosContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No photos available</div>';
+              photosContainer.innerHTML = '<div class="no-content">No photos available</div>';
           }
 
       } catch (error) {
           console.error('Failed to load place details:', error);
-          document.querySelector(`#photo-gallery-${place.place_id} .photos-container`).innerHTML = 
-              '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">Failed to load photos</div>';
+          document.getElementById(`photos-container-${place.place_id}`).innerHTML = 
+              '<div class="no-content">Failed to load photos</div>';
       }
   } else {
-      document.querySelector(`#photo-gallery-${place.place_id} .photos-container`).innerHTML = 
-          '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No additional details available</div>';
+      document.getElementById(`photos-container-${place.place_id}`).innerHTML = 
+          '<div class="no-content">No additional details available</div>';
   }
 }
 function formatCategoryName(category) {
