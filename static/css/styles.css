@@ -501,34 +501,64 @@
     background: var(--bg-primary);
   }
   
-  .details-content {
-    padding: 2rem;
+  .merged-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
   }
   
-  .details-grid {
+  .details-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  
+  .details-body {
+    padding: 1.5rem;
+  }
+  
+  .details-meta {
+    margin-top: 0.5rem;
+  }
+  
+  .distance-badge {
+    display: inline-block;
+    background: var(--accent-teal-light);
+    color: var(--accent-teal-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .details-columns {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 2rem;
-    min-height: 400px;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
   }
   
   /* Section titles */
   .section-title {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 1rem;
-    border-bottom: 2px solid var(--accent-teal);
-    padding-bottom: 0.5rem;
+    margin: 0;
+  }
+  
+  .section-subtitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 0.75rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   /* About Section */
-  .about-section {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
+  .details-about {
+    padding: 0.5rem 0;
   }
   
   .about-items {
@@ -564,19 +594,15 @@
   }
   
   /* Photos Section */
-  .photos-section {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
+  .details-photos {
+    padding: 0.5rem 0;
   }
   
   .photos-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 0.75rem;
-    max-height: 320px;
+    max-height: 200px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--border-medium) transparent;
@@ -612,12 +638,11 @@
   }
   
   /* Map Section */
-  .map-section-container {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
+  .details-map {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 1rem;
   }
   
   .map-info {
@@ -635,12 +660,8 @@
   }
   
   .map-container {
-    height: 240px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    margin-bottom: 1rem;
+    height: 200px;
+    width: 100%;
     background: var(--bg-primary);
   }
   
@@ -711,8 +732,9 @@
   
   .map-legend {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
   }
   
   .legend-item {

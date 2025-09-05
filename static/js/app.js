@@ -457,31 +457,16 @@ async function toggleDetailsRow(place, row) {
   
   detailsRow.innerHTML = `
   <td colspan="7">
-      <div class="details-content">
-          <div class="details-grid">
-              <!-- About Section -->
-              <div class="about-section">
-                  <h4 class="section-title">📝 About</h4>
-                  <div class="about-items" id="about-items-${place.place_id}">
-                      <div class="about-item"><strong>Address:</strong> ${place.address}</div>
-                      <div class="about-item"><strong>Distance:</strong> ${place.distance} km</div>
-                  </div>
+      <div class="details-content merged-container">
+          <div class="details-header">
+              <h4 class="section-title">${place.name}</h4>
+              <div class="details-meta">
+                  <span class="distance-badge">${place.distance} km away • ${place.walkTime} min walk</span>
               </div>
-              
-              <!-- Photos Section -->
-              <div class="photos-section">
-                  <h4 class="section-title">📸 Photos</h4>
-                  <div class="photos-container" id="photos-container-${place.place_id}">
-                      Loading photos...
-                  </div>
-              </div>
-              
-              <!-- Map Section -->
-              <div class="map-section-container">
-                  <h4 class="section-title">📍 Map</h4>
-                  <div class="map-info">
-                      <span class="map-distance">${place.distance} km • ${place.walkTime} min walk</span>
-                  </div>
+          </div>
+          
+          <div class="details-body">
+              <div class="details-map">
                   <div class="map-container" id="${mapContainerId}"></div>
                   <div class="map-legend">
                       <div class="legend-item">
@@ -491,6 +476,21 @@ async function toggleDetailsRow(place, row) {
                       <div class="legend-item">
                           <span class="legend-dot place-dot"></span>
                           ${place.name}
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="details-columns">
+                  <div class="details-about" id="about-items-${place.place_id}">
+                      <h5 class="section-subtitle">Details</h5>
+                      <div class="about-item"><strong>Address:</strong> ${place.address}</div>
+                      <div class="about-item"><strong>Walk Time:</strong> ${place.walkTime} min</div>
+                  </div>
+                  
+                  <div class="details-photos">
+                      <h5 class="section-subtitle">Photos</h5>
+                      <div class="photos-container" id="photos-container-${place.place_id}">
+                          Loading photos...
                       </div>
                   </div>
               </div>
