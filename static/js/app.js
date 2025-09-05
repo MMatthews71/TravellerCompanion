@@ -7,7 +7,7 @@ let allFoodResults = [];
 let allSupermarketResults = [];
 let allHostelResults = [];
 let allHealthcareResults = [];
-let allSimResults = []; // NEW: Added SIM card results storage
+let allSimResults = [];
 
 // DOM elements
 const statusElement = document.getElementById('status-message');
@@ -38,6 +38,34 @@ function initializeEventListeners() {
   statusElement.addEventListener('click', () => {
     statusElement.classList.remove('visible');
   });
+
+  // Filter button clicks
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('filter-btn')) {
+      const filterType = e.target.dataset.type;
+      const filterValue = e.target.dataset.filter;
+      
+      // Update active state
+      const filterContainer = e.target.closest('.filter-container');
+      filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      e.target.classList.add('active');
+      
+      // Apply the filter
+      if (filterType === 'food') {
+        filterFoodResults(filterValue);
+      } else if (filterType === 'supermarket') {
+        filterSupermarketResults(filterValue);
+      } else if (filterType === 'hostel') {
+        filterHostelResults(filterValue);
+      } else if (filterType === 'healthcare') {
+        filterHealthcareResults(filterValue);
+      } else if (filterType === 'sim') {
+        filterSimResults(filterValue);
+      }
+    }
+  });
 }
 
 async function detectLocation() {
@@ -50,7 +78,7 @@ async function detectLocation() {
     updateLocationDisplay(currentLocation.lat, currentLocation.lng);
   } catch (error) {
     console.warn('Location detection failed:', error);
-    currentLocation = { lat: -12.046374, lng: -77.042793 }; // Lima fallback
+    currentLocation = { lat: -12.046374, lng: -77.042793 };
     locationText.textContent = "Lima, Peru (fallback)";
   }
 }
@@ -62,22 +90,19 @@ function getCurrentLocation() {
       return;
     }
 
-    // Check cached location first
     const cached = localStorage.getItem("lastLocation");
     if (cached) {
       try {
         const coords = JSON.parse(cached);
         resolve({ coords });
         return;
-      } catch (e) {
-        // Invalid cached data, continue with fresh location
-      }
+      } catch (e) {}
     }
 
     const options = {
       enableHighAccuracy: true,
       timeout: 5000,
-      maximumAge: 300000 // 5 minutes
+      maximumAge: 300000
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -106,17 +131,7 @@ async function updateLocationDisplay(lat, lng) {
     locationText.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   }
 }
-function filterSimResults(filterType) {
-  if (currentService !== 'sim' || allSimResults.length === 0) return;
-  const filtered = filterType === 'all' 
-    ? allSimResults 
-    : allSimResults.filter(p => {
-        // Check if the place's types array contains the filter type
-        return p.types && p.types.includes(filterType);
-      });
-  currentResults = filtered;
-  displayResults(filtered);
-}
+
 async function handleServiceClick(button) {
   const service = button.dataset.service;
   currentService = service;
@@ -156,67 +171,27 @@ async function handleServiceClick(button) {
     let results = [];
 
     if (service === 'food') {
-      results = await searchMultipleCategories(['restaurant', 'cafe', 'fast_food', 'food']);
+      results = await searchPlaces('food');
       allFoodResults = results;
       document.querySelector('.food-filter-container').classList.remove('hidden');
 
     } else if (service === 'supermarket') {
-      results = await searchMultipleCategories(['supermarket', 'convenience_store', 'grocery_or_supermarket']);
+      results = await searchPlaces('supermarket');
       allSupermarketResults = results;
       document.querySelector('.supermarket-filter-container').classList.remove('hidden');
 
     } else if (service === 'hostel') {
-      results = await searchMultipleCategories(['lodging', 'hostel', 'hotel']);
-      
-      // Process accommodation results to ensure proper categorization
-      results = results.map(place => {
-        const name = place.name ? place.name.toLowerCase() : '';
-        
-        // First check if it's a hostel or hotel by name
-        if (name.includes('hostel')) {
-          // Create a new types array with "hostel" as the first element
-          const newTypes = ['hostel', ...place.types.filter(type => type !== 'hostel')];
-          return {
-            ...place,
-            types: newTypes,
-            category: 'hostel' // Set category to hostel
-          };
-        } else if (name.includes('hotel')) {
-          // Create a new types array with "hotel" as the first element
-          const newTypes = ['hotel', ...place.types.filter(type => type !== 'hotel')];
-          return {
-            ...place,
-            types: newTypes,
-            category: 'hotel' // Set category to hotel
-          };
-        } else if (place.types && place.types.includes('lodging')) {
-          // If it's not a hostel or hotel by name but has lodging type, categorize as lodging
-          return {
-            ...place,
-            category: 'lodging' // Set category to lodging
-          };
-        }
-        
-        return place;
-      });
-      
+      results = await searchPlaces('hostel');
       allHostelResults = results;
       document.querySelector('.hostel-filter-container').classList.remove('hidden');
 
     } else if (service === 'pharmacy') {
-      results = await searchMultipleCategories(['pharmacy', 'hospital']);
-      // Filter out any results with 'health' category
-      results = results.filter(place => place.category !== 'health');
+      results = await searchPlaces('pharmacy');
       allHealthcareResults = results;
       document.querySelector('.healthcare-filter-container').classList.remove('hidden');
 
-    } else if (service === 'sim') { // NEW: SIM card service
-      results = await searchMultipleCategories([
-        'mobile_phone_shop', 
-        'telecommunications', 
-        'electronics_store',
-        'convenience_store'
-      ]);
+    } else if (service === 'sim') {
+      results = await searchPlaces('sim');
       allSimResults = results;
       document.querySelector('.sim-filter-container').classList.remove('hidden');
 
@@ -239,24 +214,7 @@ async function handleServiceClick(button) {
   }
 }
 
-async function searchMultipleCategories(categories) {
-  const searches = categories.map(category => searchPlaces(category, category));
-  const resultsArrays = await Promise.all(searches);
-  
-  // Flatten the array
-  const merged = [].concat.apply([], resultsArrays);
-
-  // Deduplicate
-  const seen = new Set();
-  return merged.filter(place => {
-    const key = place.place_id || `${place.name}|${place.address}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-async function searchPlaces(keyword, category = null) {
+async function searchPlaces(keyword) {
   if (!currentLocation) {
     throw new Error('Location not available');
   }
@@ -276,11 +234,6 @@ async function searchPlaces(keyword, category = null) {
     }
 
     return data.results.map(place => {
-      // Use the first type from the place's types array as the category
-      const primaryCategory = place.types && place.types.length > 0 
-        ? place.types[0] 
-        : (category || 'other');
-      
       return {
         ...place,
         distance: calculateDistance(
@@ -289,13 +242,12 @@ async function searchPlaces(keyword, category = null) {
           place.location.lat,
           place.location.lng
         ),
-        category: primaryCategory,
         walkTime: Math.round((calculateDistance(
           currentLocation.lat,
           currentLocation.lng,
           place.location.lat,
           place.location.lng
-        ) / 5) * 60) // Walking speed ~5 km/h
+        ) / 5) * 60)
       };
     });
   } catch (error) {
@@ -361,7 +313,7 @@ function displayResults(results) {
     nameContent.appendChild(nameSpan);
     nameCell.appendChild(nameContent);
 
-    // Category (show only the first type)
+    // Category
     const categoryCell = document.createElement('td');
     categoryCell.textContent = formatCategoryName(place.category || 'general');
 
@@ -458,62 +410,21 @@ function handleSortClick(button) {
     displayResults(currentResults);
   }
 }
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('filter-btn')) {
-    const filterType = e.target.dataset.type;
-    const filterValue = e.target.dataset.filter;
-    
-    // Update active state
-    const filterContainer = e.target.closest('.filter-container');
-    filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    e.target.classList.add('active');
-    
-    // Apply the filter
-    if (filterType === 'food') {
-      filterFoodResults(filterValue);
-    } else if (filterType === 'supermarket') {
-      filterSupermarketResults(filterValue);
-    } else if (filterType === 'hostel') {
-      filterHostelResults(filterValue);
-    } else if (filterType === 'healthcare') {
-      filterHealthcareResults(filterValue);
-    } else if (filterType === 'sim') { // NEW: SIM card filter
-      filterSimResults(filterValue);
-    }
-  }
-});
-
 
 function filterFoodResults(filterType) {
   if (currentService !== 'food' || allFoodResults.length === 0) return;
   const filtered = filterType === 'all' 
     ? allFoodResults 
-    : allFoodResults.filter(p => {
-        // Special handling for fast_food category
-        if (filterType === 'fast_food') {
-          return p.category === 'fast_food' || 
-                 p.category === 'meal_takeaway' ||
-                 (p.types && (p.types.includes('fast_food') || p.types.includes('meal_takeaway')));
-        }
-        // Check if the place's category matches or if types array contains the filter type
-        return p.category === filterType || (p.types && p.types.includes(filterType));
-      });
+    : allFoodResults.filter(p => p.category === filterType);
   currentResults = filtered;
   displayResults(filtered);
 }
 
 function filterSupermarketResults(filterType) {
   if (currentService !== 'supermarket' || allSupermarketResults.length === 0) return;
-  
   const filtered = filterType === 'all' 
     ? allSupermarketResults 
-    : allSupermarketResults.filter(p => {
-        // Check if the place's types array contains the filter type
-        return p.types && p.types.includes(filterType);
-      });
-      
+    : allSupermarketResults.filter(p => p.category === filterType);
   currentResults = filtered;
   displayResults(filtered);
 }
@@ -522,14 +433,7 @@ function filterHostelResults(filterType) {
   if (currentService !== 'hostel' || allHostelResults.length === 0) return;
   const filtered = filterType === 'all' 
     ? allHostelResults 
-    : allHostelResults.filter(p => {
-        // For the "lodging" filter, only show places that are not hostels or hotels
-        if (filterType === 'lodging') {
-          return p.category === 'lodging';
-        }
-        // For other filters, check if the category matches
-        return p.category === filterType;
-      });
+    : allHostelResults.filter(p => p.category === filterType);
   currentResults = filtered;
   displayResults(filtered);
 }
@@ -537,11 +441,17 @@ function filterHostelResults(filterType) {
 function filterHealthcareResults(filterType) {
   if (currentService !== 'pharmacy' || allHealthcareResults.length === 0) return;
   const filtered = filterType === 'all' 
-    ? allHealthcareResults.filter(p => p.category !== 'health')
-    : allHealthcareResults.filter(p => {
-        // Check if the place's types array contains the filter type and it's not a 'health' category
-        return p.types && p.types.includes(filterType) && p.category !== 'health';
-      });
+    ? allHealthcareResults 
+    : allHealthcareResults.filter(p => p.category === filterType);
+  currentResults = filtered;
+  displayResults(filtered);
+}
+
+function filterSimResults(filterType) {
+  if (currentService !== 'sim' || allSimResults.length === 0) return;
+  const filtered = filterType === 'all' 
+    ? allSimResults 
+    : allSimResults.filter(p => p.category === filterType);
   currentResults = filtered;
   displayResults(filtered);
 }
@@ -647,27 +557,21 @@ function formatCategoryName(category) {
   const categoryMap = {
     'restaurant': 'Restaurant',
     'cafe': 'Café',
-    'bakery': 'Café', // Bakeries are now shown as Cafés
-    'food': 'Food',
+    'bakery': 'Café',
     'fast_food': 'Fast Food',
-    'meal_takeaway': 'Fast Food',
-    'supermarket': 'Supermarket',
+    'local_market': 'Local Market',
     'convenience_store': 'Convenience Store',
-    'grocery_or_supermarket': 'Grocery',
+    'general_store': 'General Store',
+    'supermarket': 'Supermarket',
     'lodging': 'Lodging',
-    'hostel': 'Hostel',
+    'bed_and_breakfast': 'B&B',
     'hotel': 'Hotel',
+    'hostel': 'Hostel',
     'pharmacy': 'Pharmacy',
     'hospital': 'Hospital',
-    'health': 'Health',
+    'sim_card': 'SIM Card',
     'laundry': 'Laundry',
-    'atm': 'ATM',
-    'bank': 'Bank',
-    // NEW: SIM card related categories
-    'mobile_phone_shop': 'Mobile Shop',
-    'telecommunications': 'Telecom Store',
-    'electronics_store': 'Electronics Store',
-    'convenience_store': 'Convenience Store'
+    'atm': 'ATM'
   };
   
   return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
@@ -681,7 +585,7 @@ function getServiceDisplayName(service, count = 1) {
     'food': { singular: 'restaurant', plural: 'restaurants' },
     'atm': { singular: 'ATM', plural: 'ATMs' },
     'hostel': { singular: 'accommodation', plural: 'accommodations' },
-    'sim': { singular: 'SIM card provider', plural: 'SIM card providers' } // NEW: SIM card service name
+    'sim': { singular: 'SIM card provider', plural: 'SIM card providers' }
   };
 
   const serviceInfo = serviceNames[service] || { singular: service, plural: `${service}s` };

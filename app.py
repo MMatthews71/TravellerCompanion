@@ -39,32 +39,12 @@ gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
 def create_place_data(place, search_category):
     """Helper function to create a standardized place data dictionary."""
-    place_types = place.get("types", [])
-    
-    # Determine the primary category based on the place's types
-    # Use the search category as fallback if no relevant types found
+    # Always use the search category as the primary category
+    # Ignore the actual place types
     primary_category = search_category
-    if place_types:
-        # Prioritize certain types for better categorization
-        type_priority = [
-            "hospital", "pharmacy", "doctor", "health", 
-            "supermarket", "convenience_store", "grocery",
-            "hostel", "hotel", "lodging",
-            "restaurant", "meal_takeaway", "fast_food",
-            "cafe", "bakery",
-            "bank", "atm", "finance"
-        ]
-        
-        for priority_type in type_priority:
-            if priority_type in place_types:
-                primary_category = priority_type
-                break
-        else:
-            # If no priority type found, use the first type
-            primary_category = place_types[0]
-
-    # Special handling for cafés and bakeries - combine them into café category
-    if primary_category == "bakery":
+    
+    # Special handling: bakeries are classified as cafés
+    if search_category == "bakery":
         primary_category = "cafe"
 
     return {
@@ -80,8 +60,7 @@ def create_place_data(place, search_category):
         "icon_base": place.get("icon_mask_base_uri"),
         "icon_bg": place.get("icon_background_color"),
         "price_level": place.get("price_level"),
-        "types": place_types,
-        "all_types": place_types  # Store all types for potential filtering
+        "types": place.get("types", [])
     }
 
 # Default fallback (Lima, Peru)
@@ -93,13 +72,13 @@ def index():
     return render_template("index.html", version=version)
 
 # -----------------------------
-# Nearby search
+# Nearby search with simple categorization
 # -----------------------------
 @app.route("/search")
 def search():
     """
     Search nearby places with Google Maps Places API.
-    Enhanced with better error handling and data processing.
+    Classify everything by the search term used.
     """
     try:
         lat = float(request.args.get("lat", DEFAULT_LOCATION["lat"]))
@@ -110,164 +89,130 @@ def search():
             return jsonify({"status": "error", "message": "Keyword is required"}), 400
 
         results = []
+        seen_place_ids = set()
 
-        if keyword.lower() == "hostel":
-            # For hostel searches, also include hotels/lodging
-            categories = ["hostel", "hotel", "lodging"]
-            for cat in categories:
+        if keyword.lower() == "food":
+            # Search order: Bakery → Café → Restaurant → Fast Food
+            search_categories = [
+                ("bakery", "cafe"),  # Bakeries become cafés
+                ("cafe", "cafe"),
+                ("restaurant", "restaurant"),
+                ("fast food", "fast_food")
+            ]
+            
+            for search_keyword, result_category in search_categories:
                 places_result = gmaps.places_nearby(
                     location=(lat, lng),
-                    radius=1500,   # slightly bigger search radius for accommodations
-                    keyword=cat,
+                    radius=2000,
+                    keyword=search_keyword
                 )
                 for place in places_result.get("results", []):
-                    results.append(create_place_data(place, cat))
+                    pid = place.get("place_id")
+                    if pid:
+                        if pid in seen_place_ids:
+                            # Update existing entry with new category
+                            for i, result in enumerate(results):
+                                if result.get("place_id") == pid:
+                                    results[i] = create_place_data(place, result_category)
+                                    break
+                        else:
+                            results.append(create_place_data(place, result_category))
+                            seen_place_ids.add(pid)
 
         elif keyword.lower() == "supermarket":
-            # Handle different market types
-            seen_place_ids = set()
-
-            # Supermarkets
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="supermarket",
-                type="supermarket"
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "supermarket"))
-                    seen_place_ids.add(pid)
-
-            # Convenience stores
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="convenience store",
-                type="convenience_store"
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "convenience store"))
-                    seen_place_ids.add(pid)
-
-            # Local/farmers markets
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="local market",
-                type=["farmers_market", "open_air_market"]
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "local market"))
-                    seen_place_ids.add(pid)
+            # Search order: Local Market → Convenience Store → General Store → Supermarket
+            search_categories = [
+                ("local market", "local_market"),
+                ("convenience store", "convenience_store"),
+                ("general store", "general_store"),
+                ("supermarket", "supermarket")
+            ]
+            
+            for search_keyword, result_category in search_categories:
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=2000,
+                    keyword=search_keyword
+                )
+                for place in places_result.get("results", []):
+                    pid = place.get("place_id")
+                    if pid:
+                        if pid in seen_place_ids:
+                            # Update existing entry with new category
+                            for i, result in enumerate(results):
+                                if result.get("place_id") == pid:
+                                    results[i] = create_place_data(place, result_category)
+                                    break
+                        else:
+                            results.append(create_place_data(place, result_category))
+                            seen_place_ids.add(pid)
 
         elif keyword.lower() == "pharmacy":
-            # Healthcare: pharmacies + hospitals
-            categories = ["pharmacy", "hospital"]
-            seen_place_ids = set()
-            for cat in categories:
-                places_result = gmaps.places_nearby(
-                    location=(lat, lng),
-                    radius=2000,
-                    keyword=cat,
-                    type=cat
-                )
-                for place in places_result.get("results", []):
-                    pid = place.get("place_id")
-                    if pid and pid not in seen_place_ids:
-                        results.append(create_place_data(place, cat))
-                        seen_place_ids.add(pid)
-
-        elif keyword.lower() == "food":
-            # Enhanced food search with multiple categories
-            seen_place_ids = set()
+            # Search order: Pharmacy → Hospital
+            search_categories = [
+                ("pharmacy", "pharmacy"),
+                ("hospital", "hospital")
+            ]
             
-            # Restaurants
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="restaurant"
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "restaurant"))
-                    seen_place_ids.add(pid)
-
-            # Fast food
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                type="meal_takeaway"
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "fast_food"))
-                    seen_place_ids.add(pid)
-
-            # Search for fast food specifically
-            places_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="fast food"
-            )
-            for place in places_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "fast_food"))
-                    seen_place_ids.add(pid)
-
-            # Cafés (includes bakeries)
-            cafe_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="cafe",
-                type="cafe"
-            )
-            for place in cafe_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "cafe"))
-                    seen_place_ids.add(pid)
-
-            # Bakeries (will be categorized as cafés)
-            bakery_result = gmaps.places_nearby(
-                location=(lat, lng),
-                radius=2000,
-                keyword="bakery",
-                type="bakery"
-            )
-            for place in bakery_result.get("results", []):
-                pid = place.get("place_id")
-                if pid and pid not in seen_place_ids:
-                    results.append(create_place_data(place, "cafe"))  # Categorize as cafe
-                    seen_place_ids.add(pid)
-
-        elif keyword.lower() == "sim":  # NEW: SIM card search
-            # SIM card sellers: mobile shops, telecom stores, electronics stores, convenience stores
-            categories = ["mobile_phone_shop", "telecommunications", "electronics_store", "convenience_store"]
-            seen_place_ids = set()
-            for cat in categories:
+            for search_keyword, result_category in search_categories:
                 places_result = gmaps.places_nearby(
                     location=(lat, lng),
                     radius=2000,
-                    keyword="sim card",
-                    type=cat
+                    keyword=search_keyword
                 )
                 for place in places_result.get("results", []):
                     pid = place.get("place_id")
-                    if pid and pid not in seen_place_ids:
-                        results.append(create_place_data(place, cat))
-                        seen_place_ids.add(pid)
+                    if pid:
+                        if pid in seen_place_ids:
+                            # Update existing entry with new category
+                            for i, result in enumerate(results):
+                                if result.get("place_id") == pid:
+                                    results[i] = create_place_data(place, result_category)
+                                    break
+                        else:
+                            results.append(create_place_data(place, result_category))
+                            seen_place_ids.add(pid)
+
+        elif keyword.lower() == "hostel":
+            # Search order: Accommodation → B&B → Hotels → Hostels
+            search_categories = [
+                ("accommodation", "lodging"),
+                ("bed and breakfast", "bed_and_breakfast"),
+                ("hotel", "hotel"),
+                ("hostel", "hostel")
+            ]
+            
+            for search_keyword, result_category in search_categories:
+                places_result = gmaps.places_nearby(
+                    location=(lat, lng),
+                    radius=2000,
+                    keyword=search_keyword
+                )
+                for place in places_result.get("results", []):
+                    pid = place.get("place_id")
+                    if pid:
+                        if pid in seen_place_ids:
+                            # Update existing entry with new category
+                            for i, result in enumerate(results):
+                                if result.get("place_id") == pid:
+                                    results[i] = create_place_data(place, result_category)
+                                    break
+                        else:
+                            results.append(create_place_data(place, result_category))
+                            seen_place_ids.add(pid)
+
+        elif keyword.lower() == "sim":
+            # SIM card search - just search for "sim card"
+            places_result = gmaps.places_nearby(
+                location=(lat, lng),
+                radius=2000,
+                keyword="sim card"
+            )
+            for place in places_result.get("results", []):
+                results.append(create_place_data(place, "sim_card"))
 
         else:
-            # General search (atm, laundry, etc.)
+            # General search (laundry, atm, etc.) - classify by search term
             radius = 2000 if keyword.lower() in ["supermarket", "food", "restaurant"] else 1000
 
             places_result = gmaps.places_nearby(
@@ -275,21 +220,10 @@ def search():
                 radius=radius,
                 keyword=keyword,
             )
-            all_places = places_result.get("results", [])
-
-            for place in all_places:
+            for place in places_result.get("results", []):
                 results.append(create_place_data(place, keyword.lower()))
 
-        # Deduplicate across all branches
-        seen = set()
-        unique_results = []
-        for result in results:
-            identifier = result.get("place_id") or f"{result['name']}|{result['address']}"
-            if identifier not in seen:
-                seen.add(identifier)
-                unique_results.append(result)
-
-        return jsonify({"status": "success", "results": unique_results})
+        return jsonify({"status": "success", "results": results})
 
     except ValueError as e:
         print(f"❌ Search parameter error: {e}")
@@ -328,7 +262,7 @@ def place_details():
         
         # Process photos
         if "photos" in result:
-            for photo in result["photos"][:6]:  # Limit to 6 photos
+            for photo in result["photos"][:6]:
                 ref = photo.get("photo_reference")
                 if ref:
                     photo_url = (
@@ -417,7 +351,7 @@ def format_opening_hours(hours_list):
         elif len(groups) == 1:
             return f"🕒 Daily: {groups[0]['hours']}"
         else:
-            return "🕒 " + " | ".join(parts[:3])  # Limit to 3 entries for brevity
+            return "🕒 " + " | ".join(parts[:3])
 
     except Exception:
         return "🕒 Hours vary"
@@ -497,7 +431,7 @@ if __name__ == "__main__":
         """Open browser once server is ready"""
         health_url = "http://127.0.0.1:5000/health"
         
-        for attempt in range(50):  # Try for 10 seconds
+        for attempt in range(50):
             try:
                 resp = requests.get(health_url, timeout=1)
                 if resp.status_code == 200:
@@ -523,7 +457,7 @@ if __name__ == "__main__":
     # Run Flask app
     app.run(
         debug=True, 
-        use_reloader=False,  # Avoid double browser opening
+        use_reloader=False,
         host="0.0.0.0", 
         port=5000
     )
