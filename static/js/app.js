@@ -456,50 +456,50 @@ async function toggleDetailsRow(place, row) {
   const mapContainerId = `map-${place.place_id}`;
   
   detailsRow.innerHTML = `
-      <td colspan="7">
-          <div class="details-content">
-              <div class="details-grid">
-                  <!-- About Section -->
-                  <div class="about-section">
-                      <h4 class="section-title">📝 About</h4>
-                      <div class="about-items" id="about-items-${place.place_id}">
-                          <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
-                          <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
-                          <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
-                          ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
-                      </div>
+  <td colspan="7">
+      <div class="details-content">
+          <div class="details-grid">
+              <!-- About Section -->
+              <div class="about-section">
+                  <h4 class="section-title">📝 About</h4>
+                  <div class="about-items" id="about-items-${place.place_id}">
+                      <div class="about-item"><strong>Address:</strong> ${place.address}</div>
+                      <div class="about-item"><strong>Walk Time:</strong> ${place.walkTime} minutes</div>
+                      <div class="about-item"><strong>Distance:</strong> ${place.distance} km</div>
+                      ${place.place_id ? `<div class="about-item"><strong>Map:</strong> <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
                   </div>
-                  
-                  <!-- Photos Section -->
-                  <div class="photos-section">
-                      <h4 class="section-title">📸 Photos</h4>
-                      <div class="photos-container" id="photos-container-${place.place_id}">
-                          Loading photos...
-                      </div>
+              </div>
+              
+              <!-- Photos Section -->
+              <div class="photos-section">
+                  <h4 class="section-title">📸 Photos</h4>
+                  <div class="photos-container" id="photos-container-${place.place_id}">
+                      Loading photos...
                   </div>
-                  
-                  <!-- Map Section -->
-                  <div class="map-section-container">
-                      <h4 class="section-title">📍 Map</h4>
-                      <div class="map-info">
-                          <span class="map-distance">${place.distance} km • ${place.walkTime} min walk</span>
+              </div>
+              
+              <!-- Map Section -->
+              <div class="map-section-container">
+                  <h4 class="section-title">📍 Map</h4>
+                  <div class="map-info">
+                      <span class="map-distance">${place.distance} km • ${place.walkTime} min walk</span>
+                  </div>
+                  <div class="map-container" id="${mapContainerId}"></div>
+                  <div class="map-legend">
+                      <div class="legend-item">
+                          <span class="legend-dot current-dot"></span>
+                          Your location
                       </div>
-                      <div class="map-container" id="${mapContainerId}"></div>
-                      <div class="map-legend">
-                          <div class="legend-item">
-                              <span class="legend-dot current-dot"></span>
-                              Your location
-                          </div>
-                          <div class="legend-item">
-                              <span class="legend-dot place-dot"></span>
-                              ${place.name}
-                          </div>
+                      <div class="legend-item">
+                          <span class="legend-dot place-dot"></span>
+                          ${place.name}
                       </div>
                   </div>
               </div>
           </div>
-      </td>
-  `;
+      </div>
+  </td>
+`;
 
   row.insertAdjacentElement('afterend', detailsRow);
   
