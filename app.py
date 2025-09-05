@@ -307,10 +307,7 @@ def place_details():
                 about_info.append(formatted_hours)
 
         # Rating info
-        if "rating" in result and "user_ratings_total" in result:
-            rating = result["rating"]
-            total = result["user_ratings_total"]
-            about_info.append(f"⭐ {rating}/5 from {total} reviews")
+        # Rating information removed as per user request
 
         return jsonify({
             "status": "success", 

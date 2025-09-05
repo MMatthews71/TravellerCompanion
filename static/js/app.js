@@ -464,9 +464,7 @@ async function toggleDetailsRow(place, row) {
                   <h4 class="section-title">📝 About</h4>
                   <div class="about-items" id="about-items-${place.place_id}">
                       <div class="about-item"><strong>Address:</strong> ${place.address}</div>
-                      <div class="about-item"><strong>Walk Time:</strong> ${place.walkTime} minutes</div>
                       <div class="about-item"><strong>Distance:</strong> ${place.distance} km</div>
-                      ${place.place_id ? `<div class="about-item"><strong>Map:</strong> <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
                   </div>
               </div>
               
