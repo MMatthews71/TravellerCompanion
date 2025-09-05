@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nomad Scout - Your Travel Companion</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+        crossorigin=""/>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ version }}">
 </head>
 <body>
@@ -103,7 +106,6 @@
           <button class="filter-btn" data-filter="supermarket" data-type="supermarket">Supermarkets</button>
           <button class="filter-btn" data-filter="local_market" data-type="supermarket">Local Markets</button>
           <button class="filter-btn" data-filter="convenience_store" data-type="supermarket">Convenience Stores</button>
-          
         </div>
       </div>
 
@@ -155,6 +157,9 @@
   <!-- Status Messages -->
   <div class="status-message" id="status-message"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+          crossorigin=""></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
 </body>
 </html>

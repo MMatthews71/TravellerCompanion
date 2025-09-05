@@ -443,8 +443,8 @@ function filterHealthcareResults(filterType) {
 async function toggleDetailsRow(place, row) {
   const existingDetailsRow = row.nextElementSibling;
   if (existingDetailsRow && existingDetailsRow.classList.contains('details-row')) {
-    existingDetailsRow.remove();
-    return;
+      existingDetailsRow.remove();
+      return;
   }
 
   // Remove other open details
@@ -453,90 +453,115 @@ async function toggleDetailsRow(place, row) {
   const detailsRow = document.createElement('tr');
   detailsRow.className = 'details-row';
 
-  const detailsCell = document.createElement('td');
-  detailsCell.colSpan = 7;
-  detailsCell.innerHTML = `
-    <div class="details-content">
-      <div class="about-section">
-        <h3 class="about-title">About ${place.name}</h3>
-        <div class="about-items" id="about-items-${place.place_id}">
-          <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
-          <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
-          <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
-          ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" rel="noopener">View on Google Maps</a></div>` : ''}
-        </div>
-      </div>
-      <div class="photo-gallery" id="photo-gallery-${place.place_id}">
-        Loading photos...
-      </div>
-    </div>
+  const mapContainerId = `map-${place.place_id}`;
+  
+  detailsRow.innerHTML = `
+      <td colspan="7">
+          <div class="details-content">
+              <div class="map-section">
+                  <div class="map-header">
+                      <h4>📍 Location Map</h4>
+                      <span class="map-distance">${place.distance} km away • ${place.walkTime} min walk</span>
+                  </div>
+                  <div class="map-container" id="${mapContainerId}" style="height: 300px;"></div>
+                  <div class="map-legend">
+                      <div class="legend-item">
+                          <span class="legend-dot current-dot"></span>
+                          Your location
+                      </div>
+                      <div class="legend-item">
+                          <span class="legend-dot place-dot"></span>
+                          ${place.name}
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="about-section">
+                  <h3 class="about-title">About ${place.name}</h3>
+                  <div class="about-items" id="about-items-${place.place_id}">
+                      <div class="about-item">📍 <strong>Address:</strong> ${place.address}</div>
+                      <div class="about-item">🚶 <strong>Walk Time:</strong> ${place.walkTime} minutes</div>
+                      <div class="about-item">📏 <strong>Distance:</strong> ${place.distance} km</div>
+                      ${place.place_id ? `<div class="about-item">🗺️ <a href="https://www.openstreetmap.org/?mlat=${place.location.lat}&mlon=${place.location.lng}#map=17/${place.location.lat}/${place.location.lng}" target="_blank" rel="noopener">View on OpenStreetMap</a></div>` : ''}
+                  </div>
+              </div>
+              
+              <div class="photo-gallery" id="photo-gallery-${place.place_id}">
+                  <h4>📸 Photos</h4>
+                  <div class="photos-container">Loading photos...</div>
+              </div>
+          </div>
+      </td>
   `;
 
-  detailsRow.appendChild(detailsCell);
   row.insertAdjacentElement('afterend', detailsRow);
+  
+  // Render the map
+  setTimeout(() => {
+      renderMap(place, mapContainerId);
+  }, 50);
 
   // Load photos and additional details
   if (place.place_id) {
-    try {
-      const response = await fetch(`/place-details?place_id=${place.place_id}`);
-      const data = await response.json();
+      try {
+          const response = await fetch(`/place-details?place_id=${place.place_id}`);
+          const data = await response.json();
 
-      const aboutItems = document.getElementById(`about-items-${place.place_id}`);
-      const photoGallery = document.getElementById(`photo-gallery-${place.place_id}`);
+          const aboutItems = document.getElementById(`about-items-${place.place_id}`);
+          const photosContainer = document.querySelector(`#photo-gallery-${place.place_id} .photos-container`);
 
-      // Add additional about information
-      if (data.about && data.about.length > 0) {
-        data.about.forEach(item => {
-          const aboutItem = document.createElement('div');
-          aboutItem.className = 'about-item';
-          
-          if (item.includes('http')) {
-            const url = item.replace(/.*?Website: /, '').trim();
-            aboutItem.innerHTML = `🌐 <a href="${url}" target="_blank" rel="noopener">Visit Website</a>`;
-          } else {
-            aboutItem.textContent = item;
+          // Add additional about information
+          if (data.about && data.about.length > 0) {
+              data.about.forEach(item => {
+                  const aboutItem = document.createElement('div');
+                  aboutItem.className = 'about-item';
+                  
+                  if (item.includes('http')) {
+                      const url = item.replace(/.*?Website: /, '').trim();
+                      aboutItem.innerHTML = `🌐 <a href="${url}" target="_blank" rel="noopener">Visit Website</a>`;
+                  } else {
+                      aboutItem.textContent = item;
+                  }
+                  
+                  aboutItems.appendChild(aboutItem);
+              });
           }
-          
-          aboutItems.appendChild(aboutItem);
-        });
-      }
 
-      // Display photos
-      if (data.photos && data.photos.length > 0) {
-        photoGallery.innerHTML = '';
-        data.photos.forEach(photoUrl => {
-          const photoWrapper = document.createElement('div');
-          photoWrapper.className = 'photo-wrapper';
-          
-          const link = document.createElement('a');
-          link.href = photoUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          
-          const img = document.createElement('img');
-          img.src = photoUrl;
-          img.alt = place.name;
-          img.loading = 'lazy';
-          
-          link.appendChild(img);
-          photoWrapper.appendChild(link);
-          photoGallery.appendChild(photoWrapper);
-        });
-      } else {
-        photoGallery.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No photos available</div>';
-      }
+          // Display photos
+          if (data.photos && data.photos.length > 0) {
+              photosContainer.innerHTML = '';
+              data.photos.forEach(photoUrl => {
+                  const photoWrapper = document.createElement('div');
+                  photoWrapper.className = 'photo-wrapper';
+                  
+                  const link = document.createElement('a');
+                  link.href = photoUrl;
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  
+                  const img = document.createElement('img');
+                  img.src = photoUrl;
+                  img.alt = place.name;
+                  img.loading = 'lazy';
+                  
+                  link.appendChild(img);
+                  photoWrapper.appendChild(link);
+                  photosContainer.appendChild(photoWrapper);
+              });
+          } else {
+              photosContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No photos available</div>';
+          }
 
-    } catch (error) {
-      console.error('Failed to load place details:', error);
-      document.getElementById(`photo-gallery-${place.place_id}`).innerHTML = 
-        '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">Failed to load photos</div>';
-    }
+      } catch (error) {
+          console.error('Failed to load place details:', error);
+          document.querySelector(`#photo-gallery-${place.place_id} .photos-container`).innerHTML = 
+              '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">Failed to load photos</div>';
+      }
   } else {
-    document.getElementById(`photo-gallery-${place.place_id}`).innerHTML = 
-      '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No additional details available</div>';
+      document.querySelector(`#photo-gallery-${place.place_id} .photos-container`).innerHTML = 
+          '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No additional details available</div>';
   }
 }
-
 function formatCategoryName(category) {
   const categoryMap = {
     'food': 'Restaurant',
@@ -585,4 +610,102 @@ function showStatus(message, type = 'info') {
       statusElement.classList.remove('visible');
     }, 4000);
   }
+}
+// Enhanced map rendering function
+function renderMap(place, mapContainerId) {
+  const map = L.map(mapContainerId, {
+      zoomControl: false,
+      dragging: false,
+      touchZoom: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false
+  });
+  
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+  
+  // Create custom icons
+  const currentLocationIcon = L.divIcon({
+      className: 'current-location-marker',
+      html: `
+          <div class="marker-pulse">
+              <div class="marker-inner" style="background-color: #06b6d4;">
+                  <span>📍</span>
+              </div>
+          </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+  });
+  
+  const placeIcon = L.divIcon({
+      className: 'place-marker',
+      html: `
+          <div class="marker-pulse">
+              <div class="marker-inner" style="background-color: #ef4444;">
+                  <span>🏢</span>
+              </div>
+          </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32]
+  });
+  
+  // Add markers
+  const currentMarker = L.marker([currentLocation.lat, currentLocation.lng], {
+      icon: currentLocationIcon,
+      title: 'Your location'
+  }).addTo(map);
+  
+  const placeMarker = L.marker([place.location.lat, place.location.lng], {
+      icon: placeIcon,
+      title: place.name
+  }).addTo(map);
+  
+  // Add connecting line
+  const polyline = L.polyline([
+      [currentLocation.lat, currentLocation.lng],
+      [place.location.lat, place.location.lng]
+  ], {
+      color: '#06b6d4',
+      weight: 3,
+      opacity: 0.7,
+      dashArray: '5, 10'
+  }).addTo(map);
+  
+  // Calculate bounds and set view with padding
+  const bounds = L.latLngBounds([
+      [currentLocation.lat, currentLocation.lng],
+      [place.location.lat, place.location.lng]
+  ]);
+  
+  // Add some padding to ensure both markers are visible
+  const padding = 0.01; // degrees of padding
+  bounds.pad(padding);
+  
+  map.fitBounds(bounds);
+  
+  // Add distance label to the line
+  const midPoint = [
+      (currentLocation.lat + place.location.lat) / 2,
+      (currentLocation.lng + place.location.lng) / 2
+  ];
+  
+  const distanceLabel = L.divIcon({
+      className: 'distance-label',
+      html: `<div>${place.distance} km</div>`,
+      iconSize: [60, 24],
+      iconAnchor: [30, 12]
+  });
+  
+  L.marker(midPoint, {
+      icon: distanceLabel,
+      interactive: false
+  }).addTo(map);
+  
+  return map;
 }

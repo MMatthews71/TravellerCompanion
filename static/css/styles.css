@@ -656,3 +656,216 @@
       justify-content: center;
     }
   }
+
+  /* Add to styles.css */
+.map-container {
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.leaflet-container {
+  border-radius: var(--radius-md);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+}
+
+.current-location-marker,
+.place-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.leaflet-popup-content {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.leaflet-popup-content strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Responsive map */
+@media (max-width: 768px) {
+  .map-container {
+      height: 250px !important;
+      margin: 0.5rem 0 !important;
+  }
+}
+
+/* Add to styles.css */
+.map-container {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin: 1rem 0;
+  background: var(--bg-primary);
+}
+
+.leaflet-container {
+  border-radius: var(--radius-md);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: var(--bg-primary) !important;
+}
+
+/* Marker styles */
+.marker-pulse {
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.marker-inner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  font-size: 16px;
+}
+
+.current-location-marker .marker-inner {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+}
+
+.place-marker .marker-inner {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+/* Distance label */
+.distance-label {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--accent-teal);
+  border-radius: var(--radius-lg);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.distance-label div {
+  transform: translateY(-1px);
+}
+
+/* Line style */
+.leaflet-overlay-pane path {
+  stroke-linecap: round;
+}
+
+/* Map controls removal */
+.leaflet-control-container {
+  display: none !important;
+}
+
+/* Responsive map */
+@media (max-width: 768px) {
+  .map-container {
+      height: 250px !important;
+      margin: 0.5rem 0 !important;
+  }
+  
+  .marker-inner {
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+  }
+}
+/* Add to styles.css */
+.map-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.map-header h4 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 0;
+}
+
+.map-distance {
+  color: var(--accent-teal);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.map-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
+}
+
+.current-dot {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.place-dot {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.photo-gallery h4 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.photos-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .map-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+  }
+  
+  .map-legend {
+      flex-direction: column;
+      gap: 0.75rem;
+  }
+  
+  .map-section {
+      padding: 1rem;
+  }
+}
