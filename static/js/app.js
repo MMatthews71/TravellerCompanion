@@ -466,6 +466,20 @@ async function toggleDetailsRow(place, row) {
           </div>
           
           <div class="details-body">
+              <div class="details-columns">
+                  <div class="details-about" id="about-items-${place.place_id}">
+                      <h5 class="section-subtitle">Details</h5>
+                      <div class="about-item"><strong>Address:</strong> ${place.address}</div>
+                      <div class="about-item"><strong>Walk Time:</strong> ${place.walkTime} min</div>
+                  </div>
+                  
+                  <div class="details-photos">
+                      <div class="photos-container" id="photos-container-${place.place_id}">
+                          Loading photos...
+                      </div>
+                  </div>
+              </div>
+              
               <div class="details-map">
                   <div class="map-container" id="${mapContainerId}"></div>
                   <div class="map-legend">
@@ -476,21 +490,6 @@ async function toggleDetailsRow(place, row) {
                       <div class="legend-item">
                           <span class="legend-dot place-dot"></span>
                           ${place.name}
-                      </div>
-                  </div>
-              </div>
-              
-              <div class="details-columns">
-                  <div class="details-about" id="about-items-${place.place_id}">
-                      <h5 class="section-subtitle">Details</h5>
-                      <div class="about-item"><strong>Address:</strong> ${place.address}</div>
-                      <div class="about-item"><strong>Walk Time:</strong> ${place.walkTime} min</div>
-                  </div>
-                  
-                  <div class="details-photos">
-                      <h5 class="section-subtitle">Photos</h5>
-                      <div class="photos-container" id="photos-container-${place.place_id}">
-                          Loading photos...
                       </div>
                   </div>
               </div>
