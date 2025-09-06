@@ -650,7 +650,6 @@ function renderMap(place, mapContainerId) {
         html: `
             <div class="marker-pulse">
                 <div class="marker-inner" style="background-color: #06b6d4;">
-                    <span>📍</span>
                 </div>
             </div>
         `,
@@ -663,7 +662,6 @@ function renderMap(place, mapContainerId) {
         html: `
             <div class="marker-pulse">
                 <div class="marker-inner" style="background-color: #ef4444;">
-                    <span>🏢</span>
                 </div>
             </div>
         `,
