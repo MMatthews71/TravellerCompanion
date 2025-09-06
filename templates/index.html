@@ -4,11 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nomad Scout - Your Travel Companion</title>
+  
+  <!-- Preload critical fonts -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" as="style">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS with integrity check -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
         crossorigin=""/>
+  
+  <!-- Custom styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ version }}">
+  
+  <!-- Meta tags for better mobile experience -->
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Discover essential services wherever your adventure takes you. Find nearby laundry, pharmacies, restaurants, ATMs, and more with Nomad Scout.">
 </head>
 <body>
   <!-- Hero Section -->
@@ -21,7 +34,7 @@
       <h1 class="hero-title">Nomad Scout</h1>
       <p class="hero-subtitle">Discover essential services wherever your adventure takes you. Smart, reliable, always ready.</p>
       <div class="location-display" id="location-display">
-        <svg class="location-icon" viewBox="0 0 24 24" fill="currentColor">
+        <svg class="location-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
         </svg>
         <span id="location-text">Detecting your location...</span>
@@ -32,44 +45,44 @@
   <!-- Services Section -->
   <section class="services-section">
     <div class="services-grid">
-      <button class="service-btn" data-service="laundry">
-        <div class="service-icon">🧺</div>
+      <button class="service-btn" data-service="laundry" aria-label="Find nearby laundry services">
+        <div class="service-icon" role="img" aria-label="Laundry basket">🧺</div>
         <div class="service-title">Laundry</div>
         <div class="service-description">Clean clothes on the go</div>
       </button>
       
-      <button class="service-btn" data-service="pharmacy">
-        <div class="service-icon">🏥</div>
+      <button class="service-btn" data-service="pharmacy" aria-label="Find nearby healthcare services">
+        <div class="service-icon" role="img" aria-label="Hospital">🏥</div>
         <div class="service-title">Healthcare</div>
         <div class="service-description">Pharmacy & medical care</div>
       </button>
       
-      <button class="service-btn" data-service="supermarket">
-        <div class="service-icon">🛒</div>
+      <button class="service-btn" data-service="supermarket" aria-label="Find nearby shopping locations">
+        <div class="service-icon" role="img" aria-label="Shopping cart">🛒</div>
         <div class="service-title">Shopping</div>
         <div class="service-description">Markets & essentials</div>
       </button>
       
-      <button class="service-btn" data-service="food">
-        <div class="service-icon">🍽️</div>
+      <button class="service-btn" data-service="food" aria-label="Find nearby restaurants and food">
+        <div class="service-icon" role="img" aria-label="Restaurant">🍽️</div>
         <div class="service-title">Food</div>
         <div class="service-description">Restaurants & dining</div>
       </button>
       
-      <button class="service-btn" data-service="atm">
-        <div class="service-icon">💰</div>
+      <button class="service-btn" data-service="atm" aria-label="Find nearby ATMs">
+        <div class="service-icon" role="img" aria-label="Money">💰</div>
         <div class="service-title">ATM</div>
         <div class="service-description">Cash when you need it</div>
       </button>
       
-      <button class="service-btn" data-service="hostel">
-        <div class="service-icon">🏨</div>
+      <button class="service-btn" data-service="hostel" aria-label="Find nearby accommodation">
+        <div class="service-icon" role="img" aria-label="Hotel">🏨</div>
         <div class="service-title">Accommodation</div>
         <div class="service-description">Places to stay</div>
       </button>
       
-      <button class="service-btn" data-service="sim">
-        <div class="service-icon">📱</div>
+      <button class="service-btn" data-service="sim" aria-label="Find nearby SIM card providers">
+        <div class="service-icon" role="img" aria-label="Mobile phone">📱</div>
         <div class="service-title">SIM Cards</div>
         <div class="service-description">Mobile connectivity</div>
       </button>
@@ -77,57 +90,57 @@
   </section>
 
   <!-- Controls Bar -->
-  <div class="controls-bar hidden" id="controls-bar">
+  <div class="controls-bar hidden" id="controls-bar" role="toolbar" aria-label="Search controls">
     <div class="controls-content">
       <div class="sort-options">
         <span class="sort-label">Sort by:</span>
-        <button class="sort-btn active" data-sort="distance" id="sort-distance">Distance</button>
-        <button class="sort-btn" data-sort="rating" id="sort-rating">Rating</button>
-        <button class="sort-btn" data-sort="ratings" id="sort-ratings"># Reviews</button>
-        <button class="sort-btn hidden" data-sort="cost" id="sort-cost">Price</button>
+        <button class="sort-btn active" data-sort="distance" id="sort-distance" aria-pressed="true">Distance</button>
+        <button class="sort-btn" data-sort="rating" id="sort-rating" aria-pressed="false">Rating</button>
+        <button class="sort-btn" data-sort="ratings" id="sort-ratings" aria-pressed="false"># Reviews</button>
+        <button class="sort-btn hidden" data-sort="cost" id="sort-cost" aria-pressed="false">Price</button>
       </div>
 
       <!-- Food filter -->
-      <div class="filter-container food-filter-container hidden">
+      <div class="filter-container food-filter-container hidden" role="group" aria-label="Food type filters">
         <span class="filter-label">Food Type:</span>
         <div class="filter-options">
-          <button class="filter-btn active" data-filter="all" data-type="food">All</button>
-          <button class="filter-btn" data-filter="restaurant" data-type="food">Restaurants</button>
-          <button class="filter-btn" data-filter="cafe" data-type="food">Cafés</button>
-          <button class="filter-btn" data-filter="fast_food" data-type="food">Fast Food</button>
+          <button class="filter-btn active" data-filter="all" data-type="food" aria-pressed="true">All</button>
+          <button class="filter-btn" data-filter="restaurant" data-type="food" aria-pressed="false">Restaurants</button>
+          <button class="filter-btn" data-filter="cafe" data-type="food" aria-pressed="false">Cafés</button>
+          <button class="filter-btn" data-filter="fast_food" data-type="food" aria-pressed="false">Fast Food</button>
         </div>
       </div>
 
       <!-- Supermarket filter -->
-      <div class="filter-container supermarket-filter-container hidden">
+      <div class="filter-container supermarket-filter-container hidden" role="group" aria-label="Market type filters">
         <span class="filter-label">Market Type:</span>
         <div class="filter-options">
-          <button class="filter-btn active" data-filter="all" data-type="supermarket">All</button>
-          <button class="filter-btn" data-filter="supermarket" data-type="supermarket">Supermarkets</button>
-          <button class="filter-btn" data-filter="local_market" data-type="supermarket">Local Markets</button>
-          <button class="filter-btn" data-filter="convenience_store" data-type="supermarket">Convenience Stores</button>
+          <button class="filter-btn active" data-filter="all" data-type="supermarket" aria-pressed="true">All</button>
+          <button class="filter-btn" data-filter="supermarket" data-type="supermarket" aria-pressed="false">Supermarkets</button>
+          <button class="filter-btn" data-filter="local_market" data-type="supermarket" aria-pressed="false">Local Markets</button>
+          <button class="filter-btn" data-filter="convenience_store" data-type="supermarket" aria-pressed="false">Convenience Stores</button>
         </div>
       </div>
 
       <!-- Hostel filter -->
-      <div class="filter-container hostel-filter-container hidden">
+      <div class="filter-container hostel-filter-container hidden" role="group" aria-label="Lodging type filters">
         <span class="filter-label">Lodging Type:</span>
         <div class="filter-options">
-          <button class="filter-btn active" data-filter="all" data-type="hostel">All</button>
-          <button class="filter-btn" data-filter="hostel" data-type="hostel">Hostels</button>
-          <button class="filter-btn" data-filter="hotel" data-type="hostel">Hotels</button>
-          <button class="filter-btn" data-filter="bed_and_breakfast" data-type="hostel">B&B</button>
-          <button class="filter-btn" data-filter="lodging" data-type="hostel">Lodging</button>
+          <button class="filter-btn active" data-filter="all" data-type="hostel" aria-pressed="true">All</button>
+          <button class="filter-btn" data-filter="hostel" data-type="hostel" aria-pressed="false">Hostels</button>
+          <button class="filter-btn" data-filter="hotel" data-type="hostel" aria-pressed="false">Hotels</button>
+          <button class="filter-btn" data-filter="bed_and_breakfast" data-type="hostel" aria-pressed="false">B&B</button>
+          <button class="filter-btn" data-filter="lodging" data-type="hostel" aria-pressed="false">Lodging</button>
         </div>
       </div>
 
       <!-- Healthcare filter -->
-      <div class="filter-container healthcare-filter-container hidden">
+      <div class="filter-container healthcare-filter-container hidden" role="group" aria-label="Healthcare type filters">
         <span class="filter-label">Healthcare Type:</span>
         <div class="filter-options">
-          <button class="filter-btn active" data-filter="all" data-type="healthcare">All</button>
-          <button class="filter-btn" data-filter="pharmacy" data-type="healthcare">Pharmacies</button>
-          <button class="filter-btn" data-filter="hospital" data-type="healthcare">Hospitals</button>
+          <button class="filter-btn active" data-filter="all" data-type="healthcare" aria-pressed="true">All</button>
+          <button class="filter-btn" data-filter="pharmacy" data-type="healthcare" aria-pressed="false">Pharmacies</button>
+          <button class="filter-btn" data-filter="hospital" data-type="healthcare" aria-pressed="false">Hospitals</button>
         </div>
       </div>
     </div>
@@ -136,30 +149,88 @@
   <!-- Results Section -->
   <div class="results-section">
     <div class="results-container hidden" id="results-container">
-      <table class="results-table">
+      <table class="results-table" role="table" aria-label="Search results">
         <thead>
-          <tr>
-            <th>Place</th>
-            <th>Category</th>
-            <th id="price-header">Price</th>
-            <th>Rating</th>
-            <th>Reviews</th>
-            <th>Status</th>
-            <th>Walk Time</th>
+          <tr role="row">
+            <th scope="col">Place</th>
+            <th scope="col">Category</th>
+            <th scope="col" id="price-header">Price</th>
+            <th scope="col">Rating</th>
+            <th scope="col">Reviews</th>
+            <th scope="col">Status</th>
+            <th scope="col">Walk Time</th>
           </tr>
         </thead>
-        <tbody id="results-body">
+        <tbody id="results-body" role="rowgroup">
         </tbody>
       </table>
     </div>
   </div>
 
   <!-- Status Messages -->
-  <div class="status-message" id="status-message"></div>
+  <div class="status-message" id="status-message" role="status" aria-live="polite"></div>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
           crossorigin=""></script>
+  
+  <script>
+    // Inline critical JavaScript for faster loading
+    
+    // Preload map tiles for faster rendering
+    function preloadMapTiles() {
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = 'https://a.tile.openstreetmap.org/15/16384/16384.png';
+      document.head.appendChild(link);
+    }
+    
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', preloadMapTiles);
+    } else {
+      preloadMapTiles();
+    }
+    
+    // Enhanced error handling for map loading
+    window.mapLoadError = function(error) {
+      console.error('Map loading failed:', error);
+      const mapContainers = document.querySelectorAll('.map-container');
+      mapContainers.forEach(container => {
+        if (container.innerHTML.includes('Loading') || container.innerHTML === '') {
+          container.innerHTML = `
+            <div class="map-error">
+              <div>Map failed to load</div>
+              <small>Please check your internet connection</small>
+            </div>
+          `;
+        }
+      });
+    };
+    
+    // Add loading states for better UX
+    window.showMapLoading = function(containerId) {
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `
+          <div class="map-loading">
+            <div>Loading map...</div>
+          </div>
+        `;
+      }
+    };
+  </script>
+  
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
+  
+  <!-- Service Worker for offline functionality (optional) -->
+  <script>
+    if ('serviceWorker' in navigator && 'caches' in window) {
+      navigator.serviceWorker.register('/sw.js').catch(function(error) {
+        console.log('Service Worker registration failed:', error);
+      });
+    }
+  </script>
 </body>
 </html>
