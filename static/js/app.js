@@ -610,7 +610,7 @@ function showStatus(message, type = 'info') {
   }
 }
 
-// Enhanced map rendering function with better error handling
+// Enhanced map rendering function with routing
 function renderMap(place, mapContainerId) {
   try {
     const mapContainer = document.getElementById(mapContainerId);
@@ -625,111 +625,212 @@ function renderMap(place, mapContainerId) {
     }
 
     const map = L.map(mapContainerId, {
-        zoomControl: false,
-        dragging: true,
-        touchZoom: true,
-        scrollWheelZoom: false,
-        doubleClickZoom: true,
-        boxZoom: false,
-        keyboard: false,
-        attributionControl: false
+      zoomControl: false,
+      dragging: true,
+      touchZoom: true,
+      scrollWheelZoom: false,
+      doubleClickZoom: true,
+      boxZoom: false,
+      keyboard: false,
+      attributionControl: false
     }).setView([currentLocation.lat, currentLocation.lng], 15);
-    
+
     // Store map reference for cleanup
     mapContainer._leaflet_map = map;
-    
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+
+    // Use a clean, professional basemap (Carto Light instead of raw OSM)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
     }).addTo(map);
-    
-    // Create custom icons
+
+    // Create simple but professional custom icons
+    const markerHTML = (color) => `
+      <div style="position: relative; width: 28px; height: 28px;">
+        <div style="
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          width: 14px; height: 14px;
+          border-radius: 50%;
+          background: ${color};
+          border: 2px solid white;
+          box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        "></div>
+      </div>
+    `;
+
     const currentLocationIcon = L.divIcon({
-        className: 'current-location-marker',
-        html: `
-            <div class="marker-pulse">
-                <div class="marker-inner" style="background-color: #06b6d4;">
-                </div>
-            </div>
-        `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32]
+      className: 'custom-marker',
+      html: markerHTML('#06b6d4'),
+      iconSize: [28, 28],
+      iconAnchor: [14, 28]
     });
-    
+
     const placeIcon = L.divIcon({
-        className: 'place-marker',
-        html: `
-            <div class="marker-pulse">
-                <div class="marker-inner" style="background-color: #ef4444;">
-                </div>
-            </div>
-        `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32]
+      className: 'custom-marker',
+      html: markerHTML('#ef4444'),
+      iconSize: [28, 28],
+      iconAnchor: [14, 28]
     });
-    
+
     // Add markers
-    const currentMarker = L.marker([currentLocation.lat, currentLocation.lng], {
-        icon: currentLocationIcon,
-        title: 'Your location'
+    L.marker([currentLocation.lat, currentLocation.lng], {
+      icon: currentLocationIcon,
+      title: 'Your location'
     }).addTo(map);
-    
-    const placeMarker = L.marker([place.location.lat, place.location.lng], {
-        icon: placeIcon,
-        title: place.name
+
+    L.marker([place.location.lat, place.location.lng], {
+      icon: placeIcon,
+      title: place.name
     }).addTo(map);
-    
-    // Add connecting line
-    const polyline = L.polyline([
+
+    // Get walking route from OSRM
+    getWalkingRoute(currentLocation, place.location).then(routeCoords => {
+      if (routeCoords && routeCoords.length > 0) {
+        // Draw the route with outline and main line
+        L.polyline(routeCoords, {
+          color: '#ffffff',   // outline
+          weight: 9,
+          opacity: 0.9,
+          lineJoin: 'round'
+        }).addTo(map);
+
+        L.polyline(routeCoords, {
+          color: '#06b6d4',   // main route line
+          weight: 5,
+          opacity: 1,
+          lineJoin: 'round'
+        }).addTo(map);
+
+        // Fit bounds to include the route
+        const bounds = L.latLngBounds(routeCoords);
+        map.fitBounds(bounds, { padding: [30, 30] });
+
+        // Add distance label at the midpoint of the route
+        if (routeCoords.length > 2) {
+          const midIndex = Math.floor(routeCoords.length / 2);
+          const midPoint = routeCoords[midIndex];
+
+          const distanceLabel = L.divIcon({
+            className: 'distance-label',
+            html: `<div style="
+              background: white;
+              padding: 4px 8px;
+              border-radius: 6px;
+              font-size: 13px;
+              font-weight: 500;
+              color: #333;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            ">${place.distance} km</div>`,
+            iconSize: [60, 24],
+            iconAnchor: [30, 12]
+          });
+
+          L.marker(midPoint, {
+            icon: distanceLabel,
+            interactive: false
+          }).addTo(map);
+        }
+      } else {
+        // Fallback to straight line if routing fails
+        const polyline = L.polyline([
+          [currentLocation.lat, currentLocation.lng],
+          [place.location.lat, place.location.lng]
+        ], {
+          color: '#06b6d4',
+          weight: 4,
+          opacity: 1
+        }).addTo(map);
+
+        // Fit bounds
+        const bounds = L.latLngBounds([
+          [currentLocation.lat, currentLocation.lng],
+          [place.location.lat, place.location.lng]
+        ]);
+        map.fitBounds(bounds, { padding: [30, 30] });
+
+        // Add distance label
+        const midPoint = [
+          (currentLocation.lat + place.location.lat) / 2,
+          (currentLocation.lng + place.location.lng) / 2
+        ];
+
+        const distanceLabel = L.divIcon({
+          className: 'distance-label',
+          html: `<div style="
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+          ">${place.distance} km</div>`,
+          iconSize: [60, 24],
+          iconAnchor: [30, 12]
+        });
+
+        L.marker(midPoint, {
+          icon: distanceLabel,
+          interactive: false
+        }).addTo(map);
+      }
+    }).catch(error => {
+      console.error('Routing failed, using straight line:', error);
+
+      const polyline = L.polyline([
         [currentLocation.lat, currentLocation.lng],
         [place.location.lat, place.location.lng]
-    ], {
+      ], {
         color: '#06b6d4',
-        weight: 3,
-        opacity: 0.7,
-        dashArray: '5, 10'
-    }).addTo(map);
-    
-    // Calculate bounds and set view with padding
-    const bounds = L.latLngBounds([
+        weight: 4,
+        opacity: 1
+      }).addTo(map);
+
+      const bounds = L.latLngBounds([
         [currentLocation.lat, currentLocation.lng],
         [place.location.lat, place.location.lng]
-    ]);
-    
-    // Fit bounds with padding
-    map.fitBounds(bounds, { padding: [20, 20] });
-    
-    // Add distance label to the line
-    const midPoint = [
-        (currentLocation.lat + place.location.lat) / 2,
-        (currentLocation.lng + place.location.lng) / 2
-    ];
-    
-    const distanceLabel = L.divIcon({
-        className: 'distance-label',
-        html: `<div>${place.distance} km</div>`,
-        iconSize: [60, 24],
-        iconAnchor: [30, 12]
+      ]);
+      map.fitBounds(bounds, { padding: [30, 30] });
     });
-    
-    L.marker(midPoint, {
-        icon: distanceLabel,
-        interactive: false
-    }).addTo(map);
-    
+
     // Force map resize after a short delay to ensure proper rendering
     setTimeout(() => {
-        map.invalidateSize();
+      map.invalidateSize();
     }, 200);
-    
+
     return map;
-    
+
   } catch (error) {
     console.error('Error rendering map:', error);
     const mapContainer = document.getElementById(mapContainerId);
     if (mapContainer) {
-        mapContainer.innerHTML = '<div class="no-content">Map failed to load</div>';
+      mapContainer.innerHTML = '<div class="no-content">Map failed to load</div>';
     }
+  }
+}
+
+// Function to get walking route from OSRM
+async function getWalkingRoute(start, end) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/walking/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      const coordinates = route.geometry.coordinates;
+
+      // Convert from [lng, lat] to [lat, lng] for Leaflet
+      return coordinates.map(coord => [coord[1], coord[0]]);
+    }
+
+    return null;
+  } catch (error) {
+    console.error('OSRM routing error:', error);
+    return null;
   }
 }
