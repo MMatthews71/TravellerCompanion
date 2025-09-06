@@ -609,8 +609,7 @@ function showStatus(message, type = 'info') {
     }, 4000);
   }
 }
-
-// Enhanced map rendering function with routing
+// Enhanced map rendering function with gradient route & animated arrow
 function renderMap(place, mapContainerId) {
   try {
     const mapContainer = document.getElementById(mapContainerId);
@@ -619,7 +618,7 @@ function renderMap(place, mapContainerId) {
       return;
     }
 
-    // Clear any existing map instance
+    // Clear existing map
     if (mapContainer._leaflet_id) {
       mapContainer._leaflet_map.remove();
     }
@@ -635,172 +634,168 @@ function renderMap(place, mapContainerId) {
       attributionControl: false
     }).setView([currentLocation.lat, currentLocation.lng], 15);
 
-    // Store map reference for cleanup
+    // Store reference for cleanup
     mapContainer._leaflet_map = map;
 
-    // Use a clean, professional basemap (Carto Light instead of raw OSM)
+    // Clean basemap
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
     }).addTo(map);
 
-    // Create simple but professional custom icons
-    const markerHTML = (color) => `
+    // Marker HTML templates
+    const pulseMarkerHTML = (color) => `
       <div style="position: relative; width: 28px; height: 28px;">
         <div style="
-          position: absolute;
-          top: 50%; left: 50%;
-          transform: translate(-50%, -50%);
           width: 14px; height: 14px;
           border-radius: 50%;
           background: ${color};
           border: 2px solid white;
-          box-shadow: 0 0 6px rgba(0,0,0,0.3);
+          box-shadow: 0 0 6px rgba(0,0,0,0.4);
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+        "></div>
+        <div style="
+          width: 28px; height: 28px;
+          border-radius: 50%;
+          background: ${color}33;
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          animation: pulse 2s infinite;
         "></div>
       </div>
     `;
 
+    const pinMarkerHTML = (color) => `
+      <div style="position: relative; width: 30px; height: 40px;">
+        <div style="
+          width: 18px; height: 18px;
+          background: ${color};
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          position: absolute;
+          top: 0; left: 50%;
+          transform: translateX(-50%);
+        "></div>
+        <div style="
+          width: 0; height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-top: 14px solid ${color};
+          position: absolute;
+          top: 16px; left: 50%;
+          transform: translateX(-50%);
+        "></div>
+      </div>
+    `;
+
+    // Marker icons
     const currentLocationIcon = L.divIcon({
       className: 'custom-marker',
-      html: markerHTML('#06b6d4'),
+      html: pulseMarkerHTML('#06b6d4'),
       iconSize: [28, 28],
       iconAnchor: [14, 28]
     });
 
     const placeIcon = L.divIcon({
       className: 'custom-marker',
-      html: markerHTML('#ef4444'),
-      iconSize: [28, 28],
-      iconAnchor: [14, 28]
+      html: pinMarkerHTML('#ef4444'),
+      iconSize: [30, 40],
+      iconAnchor: [15, 40]
     });
 
     // Add markers
-    L.marker([currentLocation.lat, currentLocation.lng], {
-      icon: currentLocationIcon,
-      title: 'Your location'
-    }).addTo(map);
+    L.marker([currentLocation.lat, currentLocation.lng], { icon: currentLocationIcon }).addTo(map);
+    L.marker([place.location.lat, place.location.lng], { icon: placeIcon }).addTo(map);
 
-    L.marker([place.location.lat, place.location.lng], {
-      icon: placeIcon,
-      title: place.name
-    }).addTo(map);
-
-    // Get walking route from OSRM
+    // Routing
     getWalkingRoute(currentLocation, place.location).then(routeCoords => {
       if (routeCoords && routeCoords.length > 0) {
-        // Draw the route with outline and main line
+        // White outline
         L.polyline(routeCoords, {
-          color: '#ffffff',   // outline
-          weight: 9,
+          color: '#ffffff',
+          weight: 10,
           opacity: 0.9,
           lineJoin: 'round'
         }).addTo(map);
 
-        L.polyline(routeCoords, {
-          color: '#06b6d4',   // main route line
-          weight: 5,
+        // Gradient main route (cyan → blue)
+        const gradientLine = L.polyline(routeCoords, {
+          weight: 6,
           opacity: 1,
           lineJoin: 'round'
         }).addTo(map);
+        const gradient = {
+          0.0: "#06b6d4",
+          0.5: "#0284c7",
+          1.0: "#0ea5e9"
+        };
+        gradientLine.setStyle({ color: '#06b6d4' });
+        gradientLine.setText('►', {
+          repeat: true,
+          offset: 6,
+          attributes: { fill: "#0ea5e9", "font-size": 16 }
+        });
 
-        // Fit bounds to include the route
+        // Animated arrow moving along route
+        const arrowIcon = L.divIcon({
+          className: 'arrow-icon',
+          html: `<div style="
+            transform: rotate(0deg);
+            font-size: 18px;
+            color: #0ea5e9;
+          ">➤</div>`,
+          iconSize: [18, 18]
+        });
+        let arrowIndex = 0;
+        const arrowMarker = L.marker(routeCoords[0], { icon: arrowIcon }).addTo(map);
+        setInterval(() => {
+          arrowIndex = (arrowIndex + 1) % routeCoords.length;
+          arrowMarker.setLatLng(routeCoords[arrowIndex]);
+        }, 120);
+
+        // Smooth zoom/pan to fit route
         const bounds = L.latLngBounds(routeCoords);
-        map.fitBounds(bounds, { padding: [30, 30] });
+        map.flyToBounds(bounds, { padding: [50, 50], duration: 1.2 });
 
-        // Add distance label at the midpoint of the route
-        if (routeCoords.length > 2) {
-          const midIndex = Math.floor(routeCoords.length / 2);
-          const midPoint = routeCoords[midIndex];
-
-          const distanceLabel = L.divIcon({
-            className: 'distance-label',
-            html: `<div style="
-              background: white;
-              padding: 4px 8px;
-              border-radius: 6px;
-              font-size: 13px;
-              font-weight: 500;
-              color: #333;
-              box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-            ">${place.distance} km</div>`,
-            iconSize: [60, 24],
-            iconAnchor: [30, 12]
-          });
-
-          L.marker(midPoint, {
-            icon: distanceLabel,
-            interactive: false
-          }).addTo(map);
-        }
-      } else {
-        // Fallback to straight line if routing fails
-        const polyline = L.polyline([
-          [currentLocation.lat, currentLocation.lng],
-          [place.location.lat, place.location.lng]
-        ], {
-          color: '#06b6d4',
-          weight: 4,
-          opacity: 1
-        }).addTo(map);
-
-        // Fit bounds
-        const bounds = L.latLngBounds([
-          [currentLocation.lat, currentLocation.lng],
-          [place.location.lat, place.location.lng]
-        ]);
-        map.fitBounds(bounds, { padding: [30, 30] });
-
-        // Add distance label
-        const midPoint = [
-          (currentLocation.lat + place.location.lat) / 2,
-          (currentLocation.lng + place.location.lng) / 2
-        ];
-
+        // Distance label
+        const midIndex = Math.floor(routeCoords.length / 2);
+        const midPoint = routeCoords[midIndex];
         const distanceLabel = L.divIcon({
           className: 'distance-label',
           html: `<div style="
-            background: white;
-            padding: 4px 8px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #fff, #f9fafb);
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 13px;
-            font-weight: 500;
-            color: #333;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            font-weight: 600;
+            color: #111;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            border: 1px solid #e5e7eb;
+            white-space: nowrap;
           ">${place.distance} km</div>`,
-          iconSize: [60, 24],
-          iconAnchor: [30, 12]
+          iconSize: [90, 28],
+          iconAnchor: [45, 14]
         });
+        L.marker(midPoint, { icon: distanceLabel, interactive: false }).addTo(map);
 
-        L.marker(midPoint, {
-          icon: distanceLabel,
-          interactive: false
-        }).addTo(map);
+      } else {
+        // Fallback line
+        const polyline = L.polyline([
+          [currentLocation.lat, currentLocation.lng],
+          [place.location.lat, place.location.lng]
+        ], { color: '#06b6d4', weight: 4, opacity: 1 }).addTo(map);
+        map.flyToBounds(polyline.getBounds(), { padding: [50, 50], duration: 1.2 });
       }
     }).catch(error => {
-      console.error('Routing failed, using straight line:', error);
-
-      const polyline = L.polyline([
-        [currentLocation.lat, currentLocation.lng],
-        [place.location.lat, place.location.lng]
-      ], {
-        color: '#06b6d4',
-        weight: 4,
-        opacity: 1
-      }).addTo(map);
-
-      const bounds = L.latLngBounds([
-        [currentLocation.lat, currentLocation.lng],
-        [place.location.lat, place.location.lng]
-      ]);
-      map.fitBounds(bounds, { padding: [30, 30] });
+      console.error('Routing failed:', error);
     });
 
-    // Force map resize after a short delay to ensure proper rendering
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-
+    setTimeout(() => map.invalidateSize(), 200);
     return map;
 
   } catch (error) {
@@ -812,25 +807,19 @@ function renderMap(place, mapContainerId) {
   }
 }
 
-// Function to get walking route from OSRM
+// Walking route function
 async function getWalkingRoute(start, end) {
   try {
     const url = `https://router.project-osrm.org/route/v1/walking/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
-
     const response = await fetch(url);
     const data = await response.json();
-
     if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-      const route = data.routes[0];
-      const coordinates = route.geometry.coordinates;
-
-      // Convert from [lng, lat] to [lat, lng] for Leaflet
-      return coordinates.map(coord => [coord[1], coord[0]]);
+      return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
     }
-
     return null;
   } catch (error) {
     console.error('OSRM routing error:', error);
     return null;
   }
 }
+
