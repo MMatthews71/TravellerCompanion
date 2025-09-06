@@ -671,28 +671,15 @@ function renderMap(place, mapContainerId) {
     const destinationIcon = L.divIcon({
       className: 'destination-marker',
       html: `<div style="
-        width: 0; 
-        height: 0; 
-        border-left: 12px solid transparent; 
-        border-right: 12px solid transparent; 
-        border-top: 20px solid #ef4444;
-        position: relative;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-      ">
-        <div style="
-          position: absolute;
-          top: -18px;
-          left: -8px;
-          width: 16px;
-          height: 16px;
-          background: #ef4444;
-          border: 2px solid white;
-          border-radius: 50%;
-          z-index: 1000;
-        "></div>
-      </div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 24]
+        width: 20px; 
+        height: 20px; 
+        background: #ef4444; 
+        border: 3px solid white; 
+        border-radius: 50%; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      "></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
     });
 
     // Add markers
@@ -758,36 +745,6 @@ function renderMap(place, mapContainerId) {
             padding: [30, 30],
             maxZoom: 16
           });
-
-          // Add distance and duration info
-          if (routeData.distance && routeData.duration) {
-            const midPoint = routeData.coordinates[Math.floor(routeData.coordinates.length / 2)];
-            const routeInfoIcon = L.divIcon({
-              className: 'route-info',
-              html: `<div style="
-                background: white;
-                padding: 4px 8px;
-                border-radius: 12px;
-                border: 1px solid #e5e7eb;
-                font-size: 11px;
-                font-weight: 600;
-                color: #374151;
-                text-align: center;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-                white-space: nowrap;
-              ">
-                📍 ${(routeData.distance / 1000).toFixed(1)} km<br>
-                🚶 ${Math.round(routeData.duration / 60)} min
-              </div>`,
-              iconSize: [60, 30],
-              iconAnchor: [30, 15]
-            });
-
-            L.marker(midPoint, { 
-              icon: routeInfoIcon,
-              interactive: false 
-            }).addTo(map);
-          }
 
         } else {
           // Fallback: direct line between points
