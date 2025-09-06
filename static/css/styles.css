@@ -953,14 +953,6 @@
       justify-content: center;
     }
     
-    .section-title {
-      font-size: 1rem;
-    }
-    
-    .details-meta {
-      gap: 0.5rem;
-    }
-    
     .map-container {
       height: 160px;
     }

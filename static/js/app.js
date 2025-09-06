@@ -458,13 +458,6 @@ async function toggleDetailsRow(place, row) {
   detailsRow.innerHTML = `
   <td colspan="7">
       <div class="details-content merged-container">
-          <div class="details-header">
-              <h4 class="section-title">${place.name}</h4>
-              <div class="details-meta">
-                  <span class="distance-badge">${place.distance} km away • ${place.walkTime} min walk</span>
-              </div>
-          </div>
-          
           <div class="details-body">
               <div class="details-columns">
                   <div class="details-about" id="about-items-${place.place_id}">
