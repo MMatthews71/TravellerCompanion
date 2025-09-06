@@ -500,10 +500,10 @@ async function toggleDetailsRow(place, row) {
 
   row.insertAdjacentElement('afterend', detailsRow);
   
-  // Render the map
+  // Render the map with a slight delay to ensure DOM is ready
   setTimeout(() => {
       renderMap(place, mapContainerId);
-  }, 50);
+  }, 100);
 
   // Load photos and additional details
   if (place.place_id) {
@@ -566,6 +566,7 @@ async function toggleDetailsRow(place, row) {
           '<div class="no-content">No additional details available</div>';
   }
 }
+
 function formatCategoryName(category) {
   const categoryMap = {
     'food': 'Restaurant',
@@ -615,101 +616,129 @@ function showStatus(message, type = 'info') {
     }, 4000);
   }
 }
-// Enhanced map rendering function
+
+// Enhanced map rendering function with better error handling
 function renderMap(place, mapContainerId) {
-  const map = L.map(mapContainerId, {
-      zoomControl: false,
-      dragging: false,
-      touchZoom: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false
-  });
-  
-  // Add OpenStreetMap tiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
-  
-  // Create custom icons
-  const currentLocationIcon = L.divIcon({
-      className: 'current-location-marker',
-      html: `
-          <div class="marker-pulse">
-              <div class="marker-inner" style="background-color: #06b6d4;">
-                  <span>📍</span>
-              </div>
-          </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
-  });
-  
-  const placeIcon = L.divIcon({
-      className: 'place-marker',
-      html: `
-          <div class="marker-pulse">
-              <div class="marker-inner" style="background-color: #ef4444;">
-                  <span>🏢</span>
-              </div>
-          </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
-  });
-  
-  // Add markers
-  const currentMarker = L.marker([currentLocation.lat, currentLocation.lng], {
-      icon: currentLocationIcon,
-      title: 'Your location'
-  }).addTo(map);
-  
-  const placeMarker = L.marker([place.location.lat, place.location.lng], {
-      icon: placeIcon,
-      title: place.name
-  }).addTo(map);
-  
-  // Add connecting line
-  const polyline = L.polyline([
-      [currentLocation.lat, currentLocation.lng],
-      [place.location.lat, place.location.lng]
-  ], {
-      color: '#06b6d4',
-      weight: 3,
-      opacity: 0.7,
-      dashArray: '5, 10'
-  }).addTo(map);
-  
-  // Calculate bounds and set view with padding
-  const bounds = L.latLngBounds([
-      [currentLocation.lat, currentLocation.lng],
-      [place.location.lat, place.location.lng]
-  ]);
-  
-  // Add some padding to ensure both markers are visible
-  const padding = 0.01; // degrees of padding
-  bounds.pad(padding);
-  
-  map.fitBounds(bounds);
-  
-  // Add distance label to the line
-  const midPoint = [
-      (currentLocation.lat + place.location.lat) / 2,
-      (currentLocation.lng + place.location.lng) / 2
-  ];
-  
-  const distanceLabel = L.divIcon({
-      className: 'distance-label',
-      html: `<div>${place.distance} km</div>`,
-      iconSize: [60, 24],
-      iconAnchor: [30, 12]
-  });
-  
-  L.marker(midPoint, {
-      icon: distanceLabel,
-      interactive: false
-  }).addTo(map);
-  
-  return map;
+  try {
+    const mapContainer = document.getElementById(mapContainerId);
+    if (!mapContainer) {
+      console.error('Map container not found:', mapContainerId);
+      return;
+    }
+
+    // Clear any existing map instance
+    if (mapContainer._leaflet_id) {
+      mapContainer._leaflet_map.remove();
+    }
+
+    const map = L.map(mapContainerId, {
+        zoomControl: false,
+        dragging: true,
+        touchZoom: true,
+        scrollWheelZoom: false,
+        doubleClickZoom: true,
+        boxZoom: false,
+        keyboard: false,
+        attributionControl: false
+    }).setView([currentLocation.lat, currentLocation.lng], 15);
+    
+    // Store map reference for cleanup
+    mapContainer._leaflet_map = map;
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Create custom icons
+    const currentLocationIcon = L.divIcon({
+        className: 'current-location-marker',
+        html: `
+            <div class="marker-pulse">
+                <div class="marker-inner" style="background-color: #06b6d4;">
+                    <span>📍</span>
+                </div>
+            </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+    });
+    
+    const placeIcon = L.divIcon({
+        className: 'place-marker',
+        html: `
+            <div class="marker-pulse">
+                <div class="marker-inner" style="background-color: #ef4444;">
+                    <span>🏢</span>
+                </div>
+            </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+    });
+    
+    // Add markers
+    const currentMarker = L.marker([currentLocation.lat, currentLocation.lng], {
+        icon: currentLocationIcon,
+        title: 'Your location'
+    }).addTo(map);
+    
+    const placeMarker = L.marker([place.location.lat, place.location.lng], {
+        icon: placeIcon,
+        title: place.name
+    }).addTo(map);
+    
+    // Add connecting line
+    const polyline = L.polyline([
+        [currentLocation.lat, currentLocation.lng],
+        [place.location.lat, place.location.lng]
+    ], {
+        color: '#06b6d4',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '5, 10'
+    }).addTo(map);
+    
+    // Calculate bounds and set view with padding
+    const bounds = L.latLngBounds([
+        [currentLocation.lat, currentLocation.lng],
+        [place.location.lat, place.location.lng]
+    ]);
+    
+    // Fit bounds with padding
+    map.fitBounds(bounds, { padding: [20, 20] });
+    
+    // Add distance label to the line
+    const midPoint = [
+        (currentLocation.lat + place.location.lat) / 2,
+        (currentLocation.lng + place.location.lng) / 2
+    ];
+    
+    const distanceLabel = L.divIcon({
+        className: 'distance-label',
+        html: `<div>${place.distance} km</div>`,
+        iconSize: [60, 24],
+        iconAnchor: [30, 12]
+    });
+    
+    L.marker(midPoint, {
+        icon: distanceLabel,
+        interactive: false
+    }).addTo(map);
+    
+    // Force map resize after a short delay to ensure proper rendering
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 200);
+    
+    return map;
+    
+  } catch (error) {
+    console.error('Error rendering map:', error);
+    const mapContainer = document.getElementById(mapContainerId);
+    if (mapContainer) {
+        mapContainer.innerHTML = '<div class="no-content">Map failed to load</div>';
+    }
+  }
 }
